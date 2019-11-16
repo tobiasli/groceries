@@ -12,7 +12,7 @@ setuptools.setup(name='groceries-tobiasli',
                  packages=setuptools.find_packages(),
                  long_description=long_description,
                  long_description_content_type="text/markdown",
-                 install_requires=['tregex-tobiasli', 'numpy', 'pytest'],
+                 install_requires=['tregex-tobiasli', 'numpy', 'pytest', 'yaml'],
                  classifiers=[
                      "Programming Language :: Python :: 3",
                      "License :: OSI Approved :: MIT License",

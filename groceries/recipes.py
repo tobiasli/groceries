@@ -14,26 +14,25 @@ import re
 import random
 from typing import Union, List, Dict, Tuple
 
-from groceryshopping.tools import tregex
-from groceryshopping.groceries import GroceryList, Ingredient
+import tregex
+from groceries.groceries import GroceryList, Ingredient
 
-from .variables import *
-from .user_defined_variables import *
+from groceries.constants import *
 
 # String construction for Menu parsing:
-NUMBER = '\d+(?:[,\.]\d+)?'
-W = '\s*'  # General seperator
+NUMBER = r'\d+(?:[,\.]\d+)?'
+W = r'\s*'  # General seperator
 
-TAG = '(?P<plan_tag>.+)'
+TAG = r'(?P<plan_tag>.+)'
 TAG_SEPARATOR = ':'
-RECIPE = '(?P<recipe>.+?)?'
-SCALING = '(?:[x\*] ?(?P<multiplier>%(NUMBER)s)|%(MADE_FOR_VARIANT)s (?P<made_for>%(NUMBER)s)|$)' % locals()
-START = '^'
+RECIPE = r'(?P<recipe>.+?)?'
+SCALING = r'(?:[x\*] ?(?P<multiplier>%(NUMBER)s)|%(MADE_FOR_VARIANT)s (?P<made_for>%(NUMBER)s)|$)' % locals()
+START = r'^'
 
 PATTERN = START + W + W.join([TAG, TAG_SEPARATOR, RECIPE, SCALING]) + W
 
 
-class Recipe(object):
+class Recipe:
     """Class for handling a recipe. A recipe has several properties and a list of
     ingredients.
 
@@ -113,12 +112,35 @@ class RecipeChoice(Recipe):
             return '<RecipeChoice object: %s>' % self.name
 
 
-class Cookbook(object):
-    """Class for handling a collection of Recipies. Contains search functions for
-    the recipies contained within."""
+class RecipeConfigType:
+    name: str
+    tags: List[str]
+    time: Union[float, int]
+    how_to: str
+    serves: Union[float, int]
+    ingredients: List[str]
 
-    def __init__(self, cookbook_dictionary: dict) -> None:
-        """the constructor only accepts a cookbook_dictionary allready parsed
+    def __init__(self, name: str,
+                 tags: List[str],
+                 time: Union[float, int],
+                 how_to: str,
+                 serves: Union[float, int],
+                 ingredients: List[str]):
+        """Class for defining the recipe information from a cookbook-config."""
+        self.name = name
+        self.tags = tags
+        self.time = time
+        self.how_to = how_to
+        self.serves = serves
+        self.ingredients = ingredients
+
+
+class Cookbook:
+    """Class for handling a collection of Recipes. Contains search functions for
+    the recipes contained within."""
+
+    def __init__(self, cookbook_dictionary: Dict[str, RecipeConfigType]) -> None:
+        """the constructor only accepts a cookbook_dictionary already parsed
         the location where the cookbook should be stored."""
         self.recipes = {name: Recipe(**recipe) for name, recipe in cookbook_dictionary.items()}
         self.tags = []

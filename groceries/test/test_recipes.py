@@ -10,7 +10,8 @@
 # -------------------------------------------------------------------------------
 import unittest
 
-from groceryshopping import recipes, groceries
+from groceries import recipes, groceries
+from groceries.test.bin import cookbook_reader
 
 RECIPE_EXAMPLE_1 = {}
 RECIPE_EXAMPLE_1['name'] = 'Chili con Carne'
@@ -266,10 +267,7 @@ RECIPECHOICE_COMBINATION_GROCERY_LIST_COMPONENTS = [
 
 SEARCH_STRING_RESULT_DICTIONARY = {
     'chili con carne': ['Chilli con Carne'],
-    'pizza med spekeskinke': ['Pizza med spekeskinke'],
-    'fisk': ['Glasert laks',
-             'Fiskeburgere',
-             'PANNESTEKT TORSK MED BACONSJY, ROSENKÅL OG VALNØTTER',
+    'fisk': ['Fiskeburgere',
              'Verdens beste fiskesuppe',
              'Lakselomper',
              'Tunfisksalat',
@@ -331,108 +329,96 @@ CUPBOARD_RESULT_TYPES = [
 ]
 
 
-class TestRecipesModule(unittest.TestCase):
-    def test_Recipe_class(self):
-        # Handle recipe dictionaries:
-        recipe1 = recipes.Recipe(**RECIPE_EXAMPLE_1)
-        recipe2 = recipes.Recipe(**RECIPE_EXAMPLE_2)
+def test_recipe_class():
+    # Handle recipe dictionaries:
+    recipe1 = recipes.Recipe(**RECIPE_EXAMPLE_1)
+    recipe2 = recipes.Recipe(**RECIPE_EXAMPLE_2)
 
-        combined_list = recipe1.ingredients + recipe2.ingredients
+    combined_list = recipe1.ingredients + recipe2.ingredients
 
-        # Checks scaling, combining and everything in one humungus assertion:
-        self.assertTrue(combined_list.components() == RECIPE_COMBINATION_GROCERY_LIST_COMPONENTS)
-
-    def test_RecipeChoice_class(self):
-        recipe1 = recipes.Recipe(**RECIPE_EXAMPLE_1)
-        recipe2 = recipes.Recipe(**RECIPE_EXAMPLE_2)
-
-        recipeChoice1 = recipes.RecipeChoice(recipe1, plan_tag='monday', made_for=4, multiplier=2)
-        recipeChoice2 = recipes.RecipeChoice(recipe2, plan_tag='Tuesday', made_for=3)
-
-        combined_list = recipeChoice1.ingredients + recipeChoice2.ingredients
-
-        # Checks scaling, combining and everything in one humungus assertion:
-        self.assertTrue(combined_list.components() == RECIPECHOICE_COMBINATION_GROCERY_LIST_COMPONENTS)
-
-        # Check that contents of recipe1 have not changed:
-        self.assertTrue(recipe1.ingredients.ingredients_formatted(sort='alphabetical') == RECIPE1_INGREDIENTS_FORMATED)
-
-    def test_Cookbook_class(self):
-
-        from .bin import cookbook_reader
-
-        cookbook = recipes.Cookbook(cookbook_reader.cookbook)  # cookbookcookbookcookbookcookbookcookbook
-
-        # Tests various search patterns:
-        self.assertTrue(isinstance(cookbook.find_recipe('fisk'), recipes.Recipe))
-
-        for search in SEARCH_STRING_RESULT_DICTIONARY:
-            self.assertTrue(cookbook.find_recipe(search).name in SEARCH_STRING_RESULT_DICTIONARY[search])
-
-        # Find blank recipe:
-        self.assertTrue(isinstance(cookbook.find_recipe(''), recipes.Recipe))
-
-        # Test menus:
-        menu = cookbook.parse_menu(PLANNING_EXAMPLE)
-
-        for item, instance in zip(menu.processed_lines, PLANNING_RESULT_TYPES):
-            self.assertTrue(isinstance(item, instance))
-
-        cupboard = cookbook.parse_menu(CUPBOARD_GROCERIES)
-
-        for item, instance in zip(cupboard.processed_lines, CUPBOARD_RESULT_TYPES):
-            self.assertTrue(isinstance(item, instance))
-
-    def test_Cookbook_recipe_search_with_grocery_list(self):
-
-        from .bin import cookbook_reader
-        from groceryshopping.tools import simpletimer
-
-        cookbook = recipes.Cookbook(cookbook_reader.cookbook)  # cookbookcookbookcookbookcookbookcookbook
-
-        # Verify that any search using the ingredients of a recipe return that specific recipe:
-        for recipe in cookbook.recipes.values():
-            timer = simpletimer.SimpleTimer()
-            response = cookbook.find_recipe_with_groceries(recipe.ingredients, best=True, make_unavailable=False)
-            timer.print()
-            self.assertTrue(recipe == response)
-
-        # Attempt to do a search for a specific recipe using a non-perfect grocery list to search:
-        items = groceries.GroceryList(['300 g kjøttdeig', 'løk', 'avokado', 'mais'])
-
-        fasit = cookbook.find_recipe('chili con carne', make_unavailable=False)
-        response = cookbook.find_recipe_with_groceries(items, best=True, make_unavailable=False)
-        self.assertTrue(fasit == response)
-
-    def test_Cookbook_recipe_regular_search(self):
-
-        from .bin import cookbook_reader
-        from groceryshopping.tools import simpletimer
-
-        cookbook = recipes.Cookbook(cookbook_reader.cookbook)  # cookbookcookbookcookbookcookbookcookbook
-
-        # Search for fish until fish is not available. What is returned?
-        cookbook.when_choice_on_empty_selection_reset_available = False
-        for number in range(100):
-            recipe = cookbook.find_recipe('fisk')
-
-            # Recipe is a recipe if recipe is found. When we reach the end of fisk-recipes
-            # which are made unavailable after each successful search, return None.
-            # Everything else is a fail.
-            self.assertTrue(isinstance(recipe, recipes.Recipe) or recipe is None)
-
-        # Search for fish, with recipe reset when no fish is found.
-        cookbook.when_choice_on_empty_selection_reset_available = True
-        cookbook.reset_available_recipes()
-        for number in range(100):
-            recipe = cookbook.find_recipe('fisk')
-
-            # Recipe is a recipe if recipe is found. When we reach the end of fisk-recipes
-            # which are made unavailable after each successful search, return None.
-            # Everything else is a fail.
-            self.assertTrue(isinstance(recipe, recipes.Recipe))
+    # Checks scaling, combining and everything in one humungus assertion:
+    assert combined_list.components() == RECIPE_COMBINATION_GROCERY_LIST_COMPONENTS
 
 
-def run():
-    suite = unittest.TestLoader().loadTestsFromTestCase(TestRecipesModule)
-    unittest.TextTestRunner(verbosity=2).run(suite)
+def test_RecipeChoice_class():
+    recipe1 = recipes.Recipe(**RECIPE_EXAMPLE_1)
+    recipe2 = recipes.Recipe(**RECIPE_EXAMPLE_2)
+
+    recipeChoice1 = recipes.RecipeChoice(recipe1, plan_tag='monday', made_for=4, multiplier=2)
+    recipeChoice2 = recipes.RecipeChoice(recipe2, plan_tag='Tuesday', made_for=3)
+
+    combined_list = recipeChoice1.ingredients + recipeChoice2.ingredients
+
+    # Checks scaling, combining and everything in one humungus assertion:
+    assert combined_list.components() == RECIPECHOICE_COMBINATION_GROCERY_LIST_COMPONENTS
+
+    # Check that contents of recipe1 have not changed:
+    assert recipe1.ingredients.ingredients_formatted(sort='alphabetical') == RECIPE1_INGREDIENTS_FORMATED
+
+
+def test_Cookbook_class():
+
+    cookbook = recipes.Cookbook(cookbook_reader.cookbook)  # cookbookcookbookcookbookcookbookcookbook
+
+    # Tests various search patterns:
+    assert isinstance(cookbook.find_recipe('fisk'), recipes.Recipe)
+
+    for search in SEARCH_STRING_RESULT_DICTIONARY:
+        assert cookbook.find_recipe(search).name in SEARCH_STRING_RESULT_DICTIONARY[search]
+        if not cookbook.find_recipe(search):
+            print(search)
+
+    # Find blank recipe:
+    assert isinstance(cookbook.find_recipe(''), recipes.Recipe)
+
+    # Test menus:
+    menu = cookbook.parse_menu(PLANNING_EXAMPLE)
+
+    for item, instance in zip(menu.processed_lines, PLANNING_RESULT_TYPES):
+        assert isinstance(item, instance)
+
+    cupboard = cookbook.parse_menu(CUPBOARD_GROCERIES)
+
+    for item, instance in zip(cupboard.processed_lines, CUPBOARD_RESULT_TYPES):
+        assert isinstance(item, instance)
+
+
+def test_Cookbook_recipe_search_with_grocery_list():
+    cookbook = recipes.Cookbook(cookbook_reader.cookbook)
+
+    # Verify that any search using the ingredients of a recipe return that specific recipe:
+    for recipe in cookbook.recipes.values():
+        response = cookbook.find_recipe_with_groceries(recipe.ingredients, best=True, make_unavailable=False)
+        assert recipe == response
+
+    # Attempt to do a search for a specific recipe using a non-perfect grocery list to search:
+    items = groceries.GroceryList(['300 g kjøttdeig', 'løk', 'avokado', 'mais'])
+
+    fasit = cookbook.find_recipe('chili con carne', make_unavailable=False)
+    response = cookbook.find_recipe_with_groceries(items, best=True, make_unavailable=False)
+    assert fasit == response
+
+def test_Cookbook_recipe_regular_search():
+
+    cookbook = recipes.Cookbook(cookbook_reader.cookbook)  # cookbookcookbookcookbookcookbookcookbook
+
+    # Search for fish until fish is not available. What is returned?
+    cookbook.when_choice_on_empty_selection_reset_available = False
+    for number in range(100):
+        recipe = cookbook.find_recipe('fisk')
+
+        # Recipe is a recipe if recipe is found. When we reach the end of fisk-recipes
+        # which are made unavailable after each successful search, return None.
+        # Everything else is a fail.
+        assert isinstance(recipe, recipes.Recipe) or recipe is None
+
+    # Search for fish, with recipe reset when no fish is found.
+    cookbook.when_choice_on_empty_selection_reset_available = True
+    cookbook.reset_available_recipes()
+    for number in range(100):
+        recipe = cookbook.find_recipe('fisk')
+
+        # Recipe is a recipe if recipe is found. When we reach the end of fisk-recipes
+        # which are made unavailable after each successful search, return None.
+        # Everything else is a fail.
+        assert isinstance(recipe, recipes.Recipe)
