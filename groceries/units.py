@@ -43,7 +43,7 @@ class Unit(object):
             units = {'': unit_definitions.empty_unit}
         self.lookup_dict = self.construct_lookup_dict(units)
 
-        self.pattern = '(?:(?<=[\d\W])|(?<=^))(?P<unit>' + '|'.join(self.lookup_dict.keys()) + ')(?:(?=\W)|(?=$))'
+        self.pattern = r'(?:(?<=[\d\W])|(?<=^))(?P<unit>' + '|'.join(self.lookup_dict.keys()) + r')(?:(?=\W)|(?=$))'
 
         if not formatting:
             unit = list(self.lookup_dict.values())[0]['unit']

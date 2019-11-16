@@ -10,13 +10,19 @@
 #               empty string is always a match,  the pattern automatically fails.
 
 ## INGREDIENTS
-APROX_PREFIXES = ['ca\.?', 'aprox\.?', 'aprx\.?', 'aproximately', 'omtrent', 'minst', 'circa']
-NUMBER_FORMAT = '(?:%(start)s%(part1)s%(stop)s)?(?:(?<=\d) +)?(?:%(start)s%(part2)s%(stop)s)?%(force_fail)s' % {
-    'start': '(?:(?<=^)|(?<=[^\d/]))',
-    'part1': '(?P<amount>\d+(?:[\., ]\d+)?)',
-    'part2': '(?P<numerator>\d+)/(?P<denominator>\d+)',
-    'stop': '(?:(?=$)|(?=[^\d/]))',
-    'force_fail': '(?(amount)|(?(numerator)|(?!)))'
+APROX_PREFIXES = [r'ca\.?', r'aprox\.?', r'aprx\.?', r'aproximately', r'omtrent', r'minst', r'circar']
+NUMBER_FORMAT = r'(?:%(start)s%(part1)s%(stop)s)?(?:(?<=\d) +)?(?:%(start)s%(part2)s%(stop)s)?%(force_fail)s' % {
+    r'start': r'(?:(?<=^)|(?<=[^\d/]))',
+    r'part1': r'(?P<amount>\d+(?:[\., ]\d+)?)',
+    r'part2': r'(?P<numerator>\d+)/(?P<denominator>\d+)',
+    r'stop': r'(?:(?=$)|(?=[^\d/]))',
+    r'force_fail': r'(?(amount)|(?(numerator)|(?!)))'}
+NUMBER_FORMAT_NAMED = r'(?:%(start)s%(part1)s%(stop)s)?(?:(?<=\d) +)?(?:%(start)s%(part2)s%(stop)s)?%(force_fail)s' % {
+    r'start': r'(?:(?<=^)|(?<=[^\d/]))',
+    r'part1': r'(?P<amount>\d+(?:[\., ]\d+)?)',
+    r'part2': r'(?P<numerator>\d+)/(?P<denominator>\d+)',
+    r'stop': r'(?:(?=$)|(?=[^\d/]))',
+    r'force_fail': r'(?(amount)|(?(numerator)|(?!)))'
 }
 INTUITIVE_FRACTIONS = [2, 3, 4,
                        8]  # These fractions are used for both parsing and formatting. Can be adjusted if needed.

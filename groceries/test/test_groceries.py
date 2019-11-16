@@ -8,8 +8,10 @@
 # Copyright:   (c) Tobias 2015
 # Licence:     <your licence>
 # -------------------------------------------------------------------------------
-import unittest
+import pytest
 import numpy
+
+from groceries import groceries
 
 INGREDIENT_PARSING_EXAMPLES = [
     u'ca. 1/2 gram safran, finhakket',
@@ -35,6 +37,21 @@ INGREDIENTS_EXAMPLES_CORRECT_RESULTS = [  # amount, dimension, quantity,  grocer
     [numpy.array([]), u'none', '', u'bananer', []],
     [numpy.array([1]), u'other_pakke', '1 pakke', u'spaghetti', []],
     [numpy.array([2]), u'other_pakke', '2 pakker', u'spaghetti', []],
+]
+
+INGREDIENT_CASES = [
+    ['ca. 1/2 gram safran, finhakket', numpy.array([0.5]), 'mass', '1/2 g', 'safran', ['finhakket']],
+    ['10-12 g safran (eller 1/2 kyllingbuljongterning)', numpy.array([10, 12]), 'mass', '10 - 12 g', 'safran',
+     ['eller 1/2 kyllingbuljongterning']],
+    ['2/3 løk', numpy.array([2 / 3]), 'none', '2/3', 'løk', []],
+    ['ca. 1 1/2 teskjeer soyasaus', numpy.array([0.0075]), 'volume', '1 1/2 ts', 'soyasaus', []],
+    ['10 ts soyasaus, eller annen salt væske', numpy.array([0.05]), 'volume', '1/2 dl', 'soyasaus',
+     ['eller annen salt væske']],
+    ['2,45kg smør', numpy.array([2450]), 'mass', '2.45 kg', 'smør', []],
+    ['50-100 g smør', numpy.array([50, 100]), 'mass', '50 - 100 g', 'smør', []],
+    ['bananer', numpy.array([]), 'none', '', 'bananer', []],
+    ['1 pakke spaghetti', numpy.array([1]), 'other_pakke', '1 pakke', 'spaghetti', []],
+    ['2 pakker spaghetti', numpy.array([2]), 'other_pakke', '2 pakker', 'spaghetti', []],
 ]
 
 INGREDIENT_RESULT_PRE_COMBINE_NUMERICAL = [
@@ -100,193 +117,180 @@ GROCERYLIST_MULTIPLICATION_TEST = [
 ]
 
 
-class TestGroceriesModule(unittest.TestCase):
-    def test_IngredientComponent_class(self):
-        from groceryshopping import groceries
-        # Class for testing the parsing of ingredients.
-        ingredients = []
-        for example in INGREDIENT_PARSING_EXAMPLES:
-            ingredients += [groceries.IngredientComponent(example)]
+@pytest.mark.parametrize('candidate,amount,dimension,amount_str,unit_str,comments', INGREDIENT_CASES)
+def test_ingredient_component_matching(candidate, amount, dimension, amount_str, unit_str, comments):
+    ing = groceries.IngredientComponent(candidate)
 
-        for i, ing in enumerate(ingredients):
-            self.assertTrue(numpy.all(ing.amount() == INGREDIENTS_EXAMPLES_CORRECT_RESULTS[i][0]))
-            self.assertTrue(ing.unit.dimension == INGREDIENTS_EXAMPLES_CORRECT_RESULTS[i][1])
-            self.assertTrue(ing.amount_formatted() == INGREDIENTS_EXAMPLES_CORRECT_RESULTS[i][2])
-            self.assertTrue(ing.name == INGREDIENTS_EXAMPLES_CORRECT_RESULTS[i][3])
-            self.assertTrue(ing.comments == INGREDIENTS_EXAMPLES_CORRECT_RESULTS[i][4])
+    assert numpy.all(ing.amount() == amount)
+    assert ing.unit.dimension == dimension
+    assert ing.amount_formatted() == amount_str
+    assert ing.name == unit_str
+    assert ing.comments == comments
 
-    def test_Ingredient_class(self):
-        from groceryshopping import groceries
-        INGREDIENT_PARSING_EXAMPLES = [
-            u'ca. 1/2 rød chili,  finhakket',
-            u'1 rød chili (uten frø)',
-            u'2/3 løk',
-            u'ca. 1 1/2 teskjeer soyasaus',
-            u'10 ts soyasaus',
-            u'4 bananer',
-            u'olivenolje'
-        ]
 
-        ingredient_result = [
-            u'2/3 l\xf8k',
-            u'1 1/2 rød chili',
-            u'0.57 dl soyasaus',
-            u'4 bananer',
-            u'olivenolje'
-        ]
+def test_ingredient():
+    candidate_list = [
+        u'ca. 1/2 rød chili,  finhakket',
+        u'1 rød chili (uten frø)',
+        u'2/3 løk',
+        u'ca. 1 1/2 teskjeer soyasaus',
+        u'10 ts soyasaus',
+        u'4 bananer',
+        u'olivenolje'
+    ]
 
-        # Which of the above ingredienst should combine with each other.
-        combination_true_indexes = {0: [0, 1], 1: [0, 1], 2: [2], 3: [3, 4], 4: [3, 4]}
+    expected_list = [
+        u'2/3 l\xf8k',
+        u'1 1/2 rød chili',
+        u'0.57 dl soyasaus',
+        u'4 bananer',
+        u'olivenolje'
+    ]
 
-        ingredients = []
-        for example in INGREDIENT_PARSING_EXAMPLES:
-            ingredients += [groceries.Ingredient(example)]
+    # Which of the above ingredienst should combine with each other.
+    combination_true_indexes = [(0, 1), (0, 1), (2,), (3, 4), (3, 4)]
 
-        # Check ability to compare objects.
-        self.assertTrue(ingredients[0] == ingredients[1])
-        self.assertFalse(ingredients[1] == ingredients[2])
-        self.assertFalse(ingredients[2] == ingredients[3])
-        self.assertTrue(ingredients[3] == ingredients[4])
+    ingredients = []
+    for example in candidate_list:
+        ingredients += [groceries.Ingredient(example)]
 
-        # Check ability to combine objects.
-        combine_list = {}
-        for ing, m in zip(ingredients, range(len(ingredients))):
-            if not ing.id in combine_list:
-                combine_list[ing.id] = ing
-            else:
-                combine_list[ing.id].combine_with_ingredient(ing)
+    # Check ability to compare objects.
+    for indexes in combination_true_indexes:
+        if len(indexes) > 1:
+            assert ingredients[indexes[0]] == ingredients[indexes[1]]
 
-        # Check output from component dictionary return:
-        for ing in combine_list.values():
-            self.assertTrue(ing.ingredient_formatted() in ingredient_result)
+    # Check ability to combine objects.
+    combine_list = {}
+    for ing, m in zip(ingredients, range(len(ingredients))):
+        if not ing.id in combine_list:
+            combine_list[ing.id] = ing
+        else:
+            combine_list[ing.id].combine_with_ingredient(ing)
 
-    def test_Ingredient_contains_method(self):
-        from groceryshopping.groceries import Ingredient
-        superset = Ingredient('100 g rød chili')
-        subset = Ingredient('50 g rød chili')
-        too_much = Ingredient('150 g rød chili')
-        close_match = Ingredient('50 g rød chilli')
+    # Check output from component dictionary return:
+    for ing in combine_list.values():
+        assert ing.ingredient_formatted() in expected_list
 
-        fuzzy_limit = 80
 
-        self.assertTrue(superset.contains(subset, aprox_name_limit=100))
-        self.assertTrue(superset.contains(superset, aprox_name_limit=100))
-        self.assertFalse(superset.contains(too_much, aprox_name_limit=100))
-        self.assertTrue(superset.contains(too_much, amount=False, aprox_name_limit=100))
+def test_ingredient_contains():
+    superset = groceries.Ingredient('100 g rød chili')
+    subset = groceries.Ingredient('50 g rød chili')
+    too_much = groceries.Ingredient('150 g rød chili')
+    close_match = groceries.Ingredient('50 g rød chilli')
 
-        self.assertFalse(superset.contains(close_match, aprox_name_limit=100))
-        self.assertTrue(superset.contains(close_match, aprox_name_limit=fuzzy_limit))
+    fuzzy_limit = 80
 
-        no_amount_superset = Ingredient('paprikapotetgull')
-        no_amount_subset_close_match = Ingredient('paprikepotetgull')
-        no_amount_subset_not_close = Ingredient('poprika pottegul')
-        no_amount_subset_mismtch = Ingredient('nisse')
+    assert superset.contains(subset, aprox_name_limit=100)
+    assert superset.contains(superset, aprox_name_limit=100)
+    assert not superset.contains(too_much, aprox_name_limit=100)
+    assert superset.contains(too_much, amount=False, aprox_name_limit=100)  # Test amount flag for contains.
 
-        self.assertTrue(no_amount_superset.contains(no_amount_superset))
-        self.assertTrue(no_amount_superset.contains(no_amount_subset_close_match, aprox_name_limit=fuzzy_limit))
-        self.assertFalse(no_amount_superset.contains(no_amount_subset_close_match, aprox_name_limit=100))
-        self.assertTrue(no_amount_superset.contains(no_amount_subset_not_close, aprox_name_limit=fuzzy_limit))
-        self.assertFalse(no_amount_superset.contains(no_amount_subset_not_close, aprox_name_limit=90))
-        self.assertFalse(no_amount_superset.contains(no_amount_subset_mismtch, aprox_name_limit=fuzzy_limit))
+    assert not superset.contains(close_match, aprox_name_limit=100)
+    assert superset.contains(close_match, aprox_name_limit=fuzzy_limit)
 
-    def test_GroceryList_class(self):
-        from groceryshopping import groceries
-        ingredient_result_numeric_sort = [0, 1, 2, 3]
-        ingredient_result_alphabetic_sort = [0, 1, 2, 3]
+    no_amount_superset = groceries.Ingredient('paprikapotetgull')
+    no_amount_subset_close_match = groceries.Ingredient('paprikepotetgull')
+    no_amount_subset_not_close = groceries.Ingredient('poprika pottegul')
+    no_amount_subset_mismatch = groceries.Ingredient('nisse')
 
-        grocery_list = groceries.GroceryList()
+    assert no_amount_superset.contains(no_amount_superset)
+    assert no_amount_superset.contains(no_amount_subset_close_match, aprox_name_limit=fuzzy_limit)
+    assert not no_amount_superset.contains(no_amount_subset_close_match, aprox_name_limit=100)
+    assert no_amount_superset.contains(no_amount_subset_not_close, aprox_name_limit=fuzzy_limit)
+    assert not no_amount_superset.contains(no_amount_subset_not_close, aprox_name_limit=90)
+    assert not no_amount_superset.contains(no_amount_subset_mismatch, aprox_name_limit=fuzzy_limit)
 
-        grocery_list.add_ingredients(INGREDIENT_PARSING_EXAMPLES)
 
-        # Test numerical sort and formatting.
-        self.assertTrue(grocery_list.ingredients_formatted(sort='numerical') == INGREDIENT_RESULT_PRE_COMBINE_NUMERICAL)
+def test_grocerylist():
+    ingredient_result_numeric_sort = [0, 1, 2, 3]
+    ingredient_result_alphabetic_sort = [0, 1, 2, 3]
 
-        # Test grocery list addition:
-        grocery_list2 = groceries.GroceryList()
-        grocery_list2.add_ingredients(u'tyttebær')
-        grocery_list2.add_ingredients(u'10 m skolisser')
-        grocery_list2.add_ingredients(u'5 cm skolisser')
+    grocery_list = groceries.GroceryList()
 
-        grocery_list += grocery_list2
+    grocery_list.add_ingredients(INGREDIENT_PARSING_EXAMPLES)
 
-        # Test sorting and formatting after addition:
-        self.assertTrue(grocery_list.ingredients_formatted(sort='alphabetical') == INGREDIENT_RESULT_ALPHABETICAL)
-        self.assertTrue(grocery_list.ingredients_formatted(sort='numerical') == INGREDIENT_RESULT_NUMERICAL)
-        #self.assertTrue(grocery_list.ingredients_formatted(sort='categorical') == INGREDIENT_RESULT_CATEGORICAL)
+    # Test numerical sort and formatting.
+    assert grocery_list.ingredients_formatted(sort='numerical') == INGREDIENT_RESULT_PRE_COMBINE_NUMERICAL
 
-        # Test ingredient subtraction:
-        new_list = groceries.GroceryList()
-        new_list.add_ingredients(['2 kg bøtte', 'snørr'])
-        new_list.subtract_ingredients('200 g bøtte')
-        new_list.subtract_ingredients('18 hg bøtte')
+    # Test grocery list addition:
+    grocery_list2 = groceries.GroceryList()
+    grocery_list2.add_ingredients(u'tyttebær')
+    grocery_list2.add_ingredients(u'10 m skolisser')
+    grocery_list2.add_ingredients(u'5 cm skolisser')
 
-        self.assertTrue(new_list.ingredients_formatted() == ['snørr'])
-        new_list.subtract_ingredients('snørr')
+    grocery_list += grocery_list2
 
-        self.assertTrue(new_list.ingredients_formatted() == [])  # List should now be empty.
+    # Test sorting and formatting after addition:
+    assert grocery_list.ingredients_formatted(sort='alphabetical') == INGREDIENT_RESULT_ALPHABETICAL
+    assert grocery_list.ingredients_formatted(sort='numerical') == INGREDIENT_RESULT_NUMERICAL
+    # assert grocery_list.ingredients_formatted(sort='categorical') == INGREDIENT_RESULT_CATEGORICAL
 
-        # Need groceries, and have some allready in the cupboard, what do i have to buy:
-        shopping_list = groceries.GroceryList(INGREDIENT_PARSING_EXAMPLES)
-        cupboard_list = groceries.GroceryList(INGREDIENTS_IN_CUPBOARD)
+    # Test ingredient subtraction:
+    new_list = groceries.GroceryList()
+    new_list.add_ingredients(['2 kg bøtte', 'snørr'])
+    new_list.subtract_ingredients('200 g bøtte')
+    new_list.subtract_ingredients('18 hg bøtte')
 
-        what_to_buy = shopping_list - cupboard_list
+    assert new_list.ingredients_formatted() == ['snørr']
+    new_list.subtract_ingredients('snørr')
 
-        self.assertTrue(what_to_buy.ingredients_formatted(sort='alphabetical') == INGREDIENTS_AFTER_CUPBOARD_REMOVAL)
-        # Make sure cupboard-contents is not modified in process:
-        self.assertTrue(
-            cupboard_list.ingredients_formatted(sort='alphabetical') == INGREDIENTS_IN_CUPBOARD_FORMATED_ALPHABETICAL)
+    assert new_list.ingredients_formatted() == []  # List should now be empty.
 
-        # Test multiplication (regular and in-place):
-        multiplication = what_to_buy * 2
-        self.assertTrue(multiplication.ingredients_formatted(sort='alphabetical') == GROCERYLIST_MULTIPLICATION_TEST)
-        what_to_buy *= 2
-        self.assertTrue(what_to_buy.ingredients_formatted(sort='alphabetical') == GROCERYLIST_MULTIPLICATION_TEST)
+    # Need groceries, and have some allready in the cupboard, what do i have to buy:
+    shopping_list = groceries.GroceryList(INGREDIENT_PARSING_EXAMPLES)
+    cupboard_list = groceries.GroceryList(INGREDIENTS_IN_CUPBOARD)
 
-        # Test multiple addition/subtraction with no amount:
-        simple1 = groceries.GroceryList(['salt og pepper', 'salt'])
-        simple2 = groceries.GroceryList('salt og pepper', 'nisse')
+    what_to_buy = shopping_list - cupboard_list
 
-        result1 = simple1 + simple1 + simple1
-        result2 = result1 - simple2
+    assert what_to_buy.ingredients_formatted(sort='alphabetical') == INGREDIENTS_AFTER_CUPBOARD_REMOVAL
+    # Make sure cupboard-contents is not modified in process:
+    assert cupboard_list.ingredients_formatted(sort='alphabetical') == INGREDIENTS_IN_CUPBOARD_FORMATED_ALPHABETICAL
 
-        self.assertTrue(result2.ingredients_formatted() == ['salt'])
+    # Test multiplication (regular and in-place):
+    multiplication = what_to_buy * 2
+    assert multiplication.ingredients_formatted(sort='alphabetical') == GROCERYLIST_MULTIPLICATION_TEST
+    what_to_buy *= 2
+    assert what_to_buy.ingredients_formatted(sort='alphabetical') == GROCERYLIST_MULTIPLICATION_TEST
 
-    def test_GroceryList_contains_method(self):
-        from groceryshopping.groceries import GroceryList, Ingredient
-        superset = ['50-100g smør', 'salt', 'chili', '1 ts kanel', '10 ounces sukker']
-        superset_list = GroceryList(superset)
+    # Test multiple addition/subtraction with no amount:
+    simple1 = groceries.GroceryList(['salt og pepper', 'salt'])
+    simple2 = groceries.GroceryList('salt og pepper', 'nisse')
 
-        for item in superset:
-            self.assertTrue(superset_list.contains(Ingredient(item)))
+    result1 = simple1 + simple1 + simple1
+    result2 = result1 - simple2
 
-        not_contains = ['salat', 'senep', 'brød', 'suketter']
+    assert result2.ingredients_formatted() == ['salt']
 
-        for item in not_contains:
-            try:
-                self.assertFalse(superset_list.contains(Ingredient(item)))
-            except:
-                self.assertFalse(superset_list.contains(Ingredient(item)))
 
-        contains_without_amount = ['200 g smør', '1 oz kanel', '100 tonn sukker']
+def test_grocerylist_contains():
+    superset = ['50-100g smør', 'salt', 'chili', '1 ts kanel', '10 ounces sukker']
+    superset_list = groceries.GroceryList(superset)
 
-        for item in contains_without_amount:
-            self.assertFalse(superset_list.contains(Ingredient(item)))
-            self.assertTrue(superset_list.contains(Ingredient(item), amount=False))
+    for item in superset:
+        assert superset_list.contains(groceries.Ingredient(item))
 
-    def test_GroceryList_compare_with_method(self):
-        from groceryshopping.groceries import GroceryList
+    not_contains = ['salat', 'senep', 'brød', 'suketter']
 
-        superset = ['50-100g smør', 'salt', 'chili', '1 ts kanel', '10 ounces sukker']
-        subset = ['0.05 kg smør', 'salt', 'chili', '3/4 teskje kanel']
-        subset_mismatch = ['0.05 kg smør', 'salat', 'chilli', 'kanel']
-        no_match = ['nisse', '1 kg troll', 'esel']
+    for item in not_contains:
+        assert not superset_list.contains(groceries.Ingredient(item))
 
-        superset_list = GroceryList(superset)
+    contains_without_amount = ['200 g smør', '1 oz kanel', '100 tonn sukker']
 
-        from groceryshopping.groceries import Ingredient
+    for item in contains_without_amount:
+        assert not superset_list.contains(groceries.Ingredient(item))
+        assert superset_list.contains(groceries.Ingredient(item), amount=False)
 
-        Ingredient('1 ts kanel').contains(Ingredient('kanel'))
 
-        self.assertTrue(superset_list.compare_with(GroceryList(subset)) == 100)
-        self.assertTrue(70 <= superset_list.compare_with(GroceryList(subset_mismatch)) <= 80)
-        self.assertTrue(superset_list.compare_with(GroceryList(no_match)) == 0)
+def test_grocerylist_compare_with():
+    superset = ['50-100g smør', 'salt', 'chili', '1 ts kanel', '10 ounces sukker']
+    subset = ['0.05 kg smør', 'salt', 'chili', '3/4 teskje kanel']
+    subset_mismatch = ['0.05 kg smør', 'salat', 'chilli', 'kanel']
+    no_match = ['nisse', '1 kg troll', 'esel']
+
+    superset_list = groceries.GroceryList(superset)
+
+    groceries.Ingredient('1 ts kanel').contains(groceries.Ingredient('kanel'))
+
+    assert superset_list.compare_with(groceries.GroceryList(subset)) == 100
+    assert 70 <= superset_list.compare_with(groceries.GroceryList(subset_mismatch)) <= 80
+    assert superset_list.compare_with(groceries.GroceryList(no_match)) == 0

@@ -36,7 +36,7 @@ class IngredientComponent:
     An Ingredient does not have to be a litteral ingredient,  but can be
     absolutely anything the user needs to buy."""
 
-    def __init__(self, ingredient_input: str, recipe: recipes.Recipe = None) -> None:
+    def __init__(self, ingredient_input: str, recipe: "recipes.Recipe" = None) -> None:
         """Constructor.
 
         Input:
@@ -98,15 +98,23 @@ class IngredientComponent:
         0 of something."""
         aprox_prefixes = '|'.join(constants.APROX_PREFIXES)
         number_combo = '^(?:%s)?[ ]*%s(?:[ -]+%s)?(?(1)|(?!))' % (
-            aprox_prefixes, constants.NUMBER_FORMAT, constants.NUMBER_FORMAT)
+            aprox_prefixes, constants.NUMBER_FORMAT_NAMED, constants.NUMBER_FORMAT_NAMED)
         all_amounts = []
         amount_text = ''
 
-        numbers = tregex.find(number_combo, ingredient_string)
+        # Purge named groups:
+        # TODO: Fix this more elegantly.
+        import re
+        namedGroupDetection = r'(\(\?P<\w+>)'
+        namedGroupReferenceDetection = r'\(\?\(\w+\)'
+        number_combo2 = re.sub(namedGroupDetection, '(', number_combo)  # Remove named groups.
+        number_combo2 = re.sub(namedGroupReferenceDetection, '(', number_combo2)  # Remove named groups.
+
+        numbers = tregex.match(number_combo2, ingredient_string)
 
         if numbers:
             amount_text = numbers[0]
-            amount_alternatives = tregex.name(constants.NUMBER_FORMAT, amount_text)
+            amount_alternatives = tregex.to_dict(constants.NUMBER_FORMAT_NAMED, amount_text)
 
             for a in amount_alternatives:
                 amount = 0
@@ -140,10 +148,10 @@ class IngredientComponent:
     def _parse_comments(ing: str) -> Tuple[list, str]:
         """Get all individual comments from the ingredient and return them as a list."""
 
-        comment_match_string = tregex.to_tuple('(\(.*?\)|, .*?$)', ing)
+        comment_match_string = tregex.to_tuple(r'(\(.*?\)|, .*?$)', ing)
         if comment_match_string:
             comment_match_string = [re.escape(s[0]) for s in comment_match_string]
-            comments = tregex.to_tuple('(?:(?<=\()|(?<=, ))(.+?)(?:(?=\))|(?=$))',
+            comments = tregex.to_tuple(r'(?:(?<=\()|(?<=, ))(.+?)(?:(?=\))|(?=$))',
                                     ing)  # Comments without containers ( "([comment])" and ",  [comment]"
             comments = [s[0] for s in comments]
         else:
@@ -172,7 +180,7 @@ class IngredientComponent:
         self.scale *= scale
 
 
-class Ingredient(object):
+class Ingredient:
     """Class for handling an ingredient. Returning unit,  summing of several units
     and plurals of units.
     An Ingredient consists of at least one IngredientComponent. If combining
@@ -182,7 +190,7 @@ class Ingredient(object):
     An Ingredient does not have to be a literal ingredient, but can represent
     absolutely anything the user needs to buy."""
 
-    def __init__(self, ingredient_input: Union[str, "Ingredient"], recipe: recipes.Recipe = None) -> None:
+    def __init__(self, ingredient_input: Union[str, "Ingredient"], recipe: "recipes.Recipe" = None) -> None:
 
         if isinstance(ingredient_input, str):
             initial_ingredient = IngredientComponent(ingredient_input, recipe)
@@ -356,11 +364,15 @@ class Ingredient(object):
             self.components[i].recipe = recipe
 
 
-class GroceryList(object):
+IngredientInputType = Union[Ingredient, str]
+IngredientOptionalSequenceInputType = Union[List[IngredientInputType], IngredientInputType]
+
+
+class GroceryList:
     """Class for handling a list of Ingredients. Methods for combining lists,  and
     for collating the ingrediens by combining duplicates."""
 
-    def __init__(self, ingredients: list = None, recipe: object = None):
+    def __init__(self, ingredients: IngredientOptionalSequenceInputType = None, recipe: object = None):
 
         self.ingredient_list = []
 
@@ -383,27 +395,27 @@ class GroceryList(object):
         output = '<GroceryList object: %d ingredients\n%s\n>' % (len(ingredients), ',\n'.join(ingredients))
         return output
 
-    def __add__(self, other: object) -> object:
+    def __add__(self, other: object) -> "GroceryList":
         assert isinstance(other, GroceryList)
         new_list = GroceryList(self._combine_lists(other.ingredient_list))
         return new_list
 
-    def __iadd__(self, other: object) -> object:
+    def __iadd__(self, other: object) -> "GroceryList":
         assert isinstance(other, GroceryList)
         self.ingredient_list = self._combine_lists(other.ingredient_list)
         return self
 
-    def __sub__(self, other: object) -> object:
+    def __sub__(self, other: object) -> "GroceryList":
         assert isinstance(other, GroceryList)
         new_list = GroceryList(self._combine_lists(other.ingredient_list, subtract=True))
         return new_list
 
-    def __isub__(self, other: object) -> object:
+    def __isub__(self, other: object) -> "GroceryList":
         assert isinstance(other, GroceryList)
         self.ingredient_list = self._combine_lists(other.ingredient_list, subtract=True)
         return self
 
-    def __mul__(self, number: Union[float, int]) -> object:
+    def __mul__(self, number: Union[float, int]) -> "GroceryList":
         """Multiplication (left hand: GroceryList * x) of a GroceryList with an
         integer or a float."""
         assert isinstance(number, (int, float))
@@ -415,12 +427,12 @@ class GroceryList(object):
         new_list = GroceryList(ingredients)
         return new_list
 
-    def __rmul__(self, number: Union[float, int]) -> object:
+    def __rmul__(self, number: Union[float, int]) -> "GroceryList":
         """Multiplication (right hand: x * GroceryList) of a GroceryList with an
         integer or a float. Use same method as left hand multiplication."""
         return self.__mul__(number)
 
-    def __imul__(self, number: Union[float, int]) -> object:
+    def __imul__(self, number: Union[float, int]) -> "GroceryList":
         assert isinstance(number, (int, float))
         # This is in place multiply, so we modify ingredients directly.
         for i in range(len(self.ingredient_list)):
@@ -469,7 +481,7 @@ class GroceryList(object):
         """Force a collation of all ingredients in self."""
         self.ingredient_list = self.collate_ingredients()
 
-    def _combine_lists(self, ingredients: list, subtract: bool = False, recipe: object = None) -> List[object]:
+    def _combine_lists(self, ingredients: IngredientOptionalSequenceInputType, subtract: bool = False, recipe: object = None) -> List[object]:
         """Combine ingredients in list with the ingredients in the current
         instance of GroceryList. Return ingredient list."""
         ingredient_list = []
@@ -497,23 +509,21 @@ class GroceryList(object):
 
         return ingredient_list
 
-    def add_ingredients(self, ingredients: Union[Ingredient, list], recipe: object = None) -> object:
+    def add_ingredients(self, ingredients: IngredientOptionalSequenceInputType, recipe: "recipes.Recipe" = None) -> None:
         """Add ingredients as strings or Ingredient objects to the GroceryList.
         Input can aalso be a list. If subtract = True, all input ingredient
         amounts are scaled to -1 so they are subtracted from the Ingredient
         total."""
         ingredient_list = self._combine_lists(ingredients, recipe=recipe)
         self.ingredient_list = ingredient_list
-        return self
 
-    def subtract_ingredients(self, ingredients: list) -> object:
+    def subtract_ingredients(self, ingredients: IngredientOptionalSequenceInputType) -> None:
         """Subtract ingredients as strings from the GroceryList. Ingredients can
         be a single string or a list of strings. The subtracted string(s) will
         be parsed and added to the GroceryList with all amounts multiplied by
         -1."""
         ingredient_list = self._combine_lists(ingredients, subtract=True)
         self.ingredient_list = ingredient_list
-        return self
 
     def collate_ingredients(self) -> list:
         """Collate a list of ingredients so that all ingredients with comparable
