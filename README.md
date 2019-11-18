@@ -13,6 +13,13 @@ pip install groceries-tobiasli
 
 ## Usage
 
+`groceries` contains a set of classes that solve a lot of shopping and food-related problems:
+
+* `Ingredient` is a container for a food item, and parses amount, unit and item name from an arbitrary string.
+* `GroceryList` is a container for `Ingredients` and handles summation of all ingredients, as well as algebra.
+* `Cookbook` is a container for `Recipe`, and make them searchable.
+* `Menu` is the class returned when you use a `Cookbook` to parse an actual, typed shopping list. It contains the recipes and ingredients that are parsed from the shopping list.
+
 ### GroceryList
 `GroceryList` is the base component for most of the functionality in `groceries`. A `GroceryList` accepts groceries
 as strings on a human readable format. They are added to a `GroceryList` as `Ingredient` instances. Groceries lists can
@@ -57,9 +64,7 @@ The base structure for an `Ingredient` string is
 The `GroceryList` class is used to represent ingredients in recipes. `Recipe` is a class that contains information
 on how to cook a specific meal. You can have multiple `Recipes` and add them to a `Cookbook`.
 
-The recipes are searchable both on name, tags and their ingredients! You
-can take what ingredients you have, and the cookbook will return the 
-recipe that has the closest ingredient match with what you have available.
+The recipes are searchable both on name and tags. 
 
 ```python
 # Demo scripts for grocery readme.
@@ -108,14 +113,8 @@ print(cookbook.find_recipe('pasta'))
 ```
 
 ### Menu
-`Cookbook.Menu` is a class for parsing an entire weeks worth of shopping,
+`Menu` is a class for parsing an entire weeks worth of shopping,
 with syntax for meals on specific days as well as regular groceries.
-
-To be able to 
-
-The above methods patterns can be either a string or a compiled regular expression. `TregexCompiled` is a class for simply
-containing the compiled regex to be run on the above methods. If patterns are long, this usage will speed things up
-considerably.
 
 ```python
 # Continuation from previous code block.
