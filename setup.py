@@ -13,7 +13,7 @@ setuptools.setup(name='groceries-tobiasli',
                  package_data={'': ['groceries/test/bin/cookbook.yaml']},
                  long_description=long_description,
                  long_description_content_type="text/markdown",
-                 install_requires=['tregex-tobiasli', 'numpy', 'pytest', 'yaml'],
+                 install_requires=['tregex-tobiasli', 'numpy', 'pytest', 'pyyaml'],
                  classifiers=[
                      "Programming Language :: Python :: 3",
                      "License :: OSI Approved :: MIT License",
