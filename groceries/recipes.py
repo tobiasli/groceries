@@ -12,7 +12,7 @@
 
 import re
 import random
-from typing import Union, List, Dict, Tuple
+from typing import Union, List, Sequence, Tuple
 
 import tregex
 from groceries.groceries import GroceryList, Ingredient
@@ -139,17 +139,17 @@ class Cookbook:
     """Class for handling a collection of Recipes. Contains search functions for
     the recipes contained within."""
 
-    def __init__(self, cookbook_dictionary: Dict[str, RecipeConfigType]) -> None:
+    def __init__(self, recipes: Sequence[Recipe]) -> None:
         """the constructor only accepts a cookbook_dictionary already parsed
         the location where the cookbook should be stored."""
-        self.recipes = {name: Recipe(**recipe) for name, recipe in cookbook_dictionary.items()}
+        self.recipes = {recipe.name: recipe for recipe in recipes}
         self.tags = []
 
         self.make_recipe_unavailable_after_search_match = True
         self.when_choice_on_empty_selection_reset_available = True
 
         self.available_recipes = []
-        self.available_tags = []
+        self.available_tags = dict()
 
         self.reset_available_recipes()  # Populate self.available_recipes and self.available_tags
 
@@ -159,7 +159,7 @@ class Cookbook:
         tag_lookup = {}
         for recipe in self.recipes.values():
             for tag in recipe.tags:
-                if not tag in tag_lookup:
+                if tag not in tag_lookup:
                     tag_lookup[tag] = []
                 tag_lookup[tag] += [recipe.name]
 
@@ -307,133 +307,138 @@ class Cookbook:
 
     def parse_menu(self, menu_text: str) -> object:
         """Return a menu object from the parsed text."""
-        return self.Menu(self, menu_text)
+        return Menu(self, menu_text)
 
-    class Menu(object):
 
-        def __init__(self, cookbook: object, menu_text: str) -> None:
-            """Class for handling a single menu. A Plan object handles two Menu objects
-            in the form of a plan and a cupboard contents list (which is handled in
-            the same way as a menu."""
-            self.cookbook = cookbook
-            self.recipes = []
-            self.groceries = GroceryList()
-            self.input_plan, self.input_lines, self.processed_lines, self.processed_plan = self.process_plan(menu_text)
+class Menu(object):
 
-            self.process_input()
+    def __init__(self, cookbook: Cookbook, menu_text: str) -> None:
+        """Class for handling a single menu. A Plan object handles two Menu objects
+        in the form of a plan and a cupboard contents list (which is handled in
+        the same way as a menu."""
+        self.cookbook = cookbook
+        self.recipes = []
+        self.groceries = GroceryList()
+        self.input_plan, self.input_lines, self.processed_lines, self.processed_plan = self.process_plan(menu_text)
 
-        def process_input(self) -> None:
-            self.recipes = [item for item in self.processed_lines if isinstance(item, RecipeChoice)]
+        self.process_input()
 
-            self.groceries = self.grocery_list(self.processed_lines)
+    def process_input(self) -> None:
+        self.recipes = [item for item in self.processed_lines if isinstance(item, RecipeChoice)]
 
-        def __sub__(self, other: object) -> object:
-            assert isinstance(other, Cookbook.Menu)
-            return self.groceries - other.groceries
+        self.groceries = self.grocery_list(self.processed_lines)
 
-        def __isub__(self, other: object) -> None:
-            assert isinstance(other, Cookbook.Menu)
-            self.groceries -= other.groceries
+    def __sub__(self, other: object) -> object:
+        assert isinstance(other, Menu)
+        return self.groceries - other.groceries
 
-        def process_plan(self, menu_text: str, keep_lines: list = []) -> Tuple:
-            """Take a plan as a string, and parse the file according to a set of rules."""
+    def __isub__(self, other: object) -> None:
+        assert isinstance(other, Menu)
+        self.groceries -= other.groceries
 
-            # Split into lines:
-            input_plan = menu_text
+    def process_plan(self, menu_text: str) -> Tuple:
+        """Take a plan as a string, and parse the file according to a set of rules."""
 
-            lines = menu_text.split('\n')
-            input_lines = [line.strip() for line in lines]
+        # Split into lines:
+        input_plan = menu_text
 
-            processed_lines = [self.process_line(line) for line in input_lines]
-            processed_plan = self.create_output_lines(processed_lines)
-            return input_plan, input_lines, processed_lines, processed_plan
+        lines = menu_text.split('\n')
+        input_lines = [line.strip() for line in lines]
 
-        def process_line(self, line: str) -> Union[str, Ingredient, RecipeChoice]:
+        processed_lines = [self.process_line(line) for line in input_lines]
+        processed_plan = self.create_output_lines(processed_lines)
+        return input_plan, input_lines, processed_lines, processed_plan
 
-            line = re.sub(RECIPE_NOT_FOUND_TAG, '', line)
+    def process_line(self, line: str) -> Union[str, Ingredient, RecipeChoice]:
 
-            if not line:
-                return line
+        line = re.sub(RECIPE_NOT_FOUND_TAG, '', line)
 
-            elif line[0] == WEEK_PLAN_COMMENT_START:
-                return line
+        if not line:
+            return line
 
-            elif TAG_SEPARATOR in line:
-                match = tregex.smart(PATTERN, line)[0]
+        elif line[0] == WEEK_PLAN_COMMENT_START:
+            return line
 
-                if match['recipe'] == '-':
-                    return RecipeChoice(plan_tag=match['plan_tag'])
+        elif TAG_SEPARATOR in line:
+            match = tregex.smart(PATTERN, line)[0]
 
-                else:
-                    if match['multiplier']:
-                        match['multiplier'] = float(match['multiplier'])
-                    if match['made_for']:
-                        match['made_for'] = float(match['made_for'])
-
-                    recipe = self.cookbook.find_recipe(match['recipe'], make_unavailable=True)
-
-                    if recipe:
-                        return RecipeChoice(recipe=recipe, plan_tag=match['plan_tag'], made_for=match['made_for'],
-                                            multiplier=match['multiplier'])
-                    else:
-                        return RecipeChoice(Recipe(name=RECIPE_NOT_FOUND_TAG), plan_tag=match[
-                            'plan_tag'])  # Blank recipe choice. Makes handling later easier as other methods don't fail.
+            if match['recipe'] == '-':
+                return RecipeChoice(plan_tag=match['plan_tag'])
 
             else:
-                return Ingredient(line)
+                if match['multiplier']:
+                    match['multiplier'] = float(match['multiplier'])
+                if match['made_for']:
+                    match['made_for'] = float(match['made_for'])
 
-        @staticmethod
-        def create_output_lines(lines: list) -> List[str]:
-            output_lines = []
-            for line in lines:
-                if isinstance(line, str):
-                    output_lines += [line]
+                recipe = self.cookbook.find_recipe(match['recipe'], make_unavailable=True)
 
-                elif isinstance(line, RecipeChoice):
-                    tag = line.plan_tag
-                    recipe = line.name
+                if recipe:
+                    return RecipeChoice(recipe=recipe, plan_tag=match['plan_tag'], made_for=match['made_for'],
+                                        multiplier=match['multiplier'])
+                else:
+                    return RecipeChoice(Recipe(name=RECIPE_NOT_FOUND_TAG), plan_tag=match[
+                        'plan_tag'])  # Blank recipe choice. Makes handling later easier as other methods don't fail.
 
-                    if not recipe:
-                        output_lines += ['%s%s %s' % (tag, TAG_SEPARATOR, NO_RECIPE)]
+        else:
+            return Ingredient(line)
+
+    @staticmethod
+    def create_output_lines(lines: list) -> str:
+        output_lines = []
+        for line in lines:
+            if isinstance(line, str):
+                output_lines += [line]
+
+            elif isinstance(line, RecipeChoice):
+                tag = line.plan_tag
+                recipe = line.name
+
+                if not recipe:
+                    output_lines += ['%s%s %s' % (tag, TAG_SEPARATOR, NO_RECIPE)]
+                else:
+                    if not line.multiplier == 1:
+                        scale = 'x%0.1f' % line.multiplier
                     else:
-                        if not line.multiplier == 1:
-                            scale = 'x%0.1f' % line.multiplier
-                        else:
-                            scale = '%s %d' % (MADE_FOR_VARIANT, line.made_for)
-                        output_lines += ['%s%s %s %s' % (tag, TAG_SEPARATOR, recipe, scale)]
+                        scale = '%s %d' % (MADE_FOR_VARIANT, line.made_for)
+                    output_lines += ['%s%s %s %s' % (tag, TAG_SEPARATOR, recipe, scale)]
 
-                elif isinstance(line, Ingredient):
-                    output_lines += [line.ingredient_formatted()]
+            elif isinstance(line, Ingredient):
+                output_lines += [line.ingredient_formatted()]
 
-            output = '\n'.join(output_lines)
+        output = '\n'.join(output_lines)
 
-            return output
+        return output
 
-        @staticmethod
-        def grocery_list(processed_lines: list) -> GroceryList:
-            # Combine the groceries of all recipes and loose ingredients.
-            grocery_total = GroceryList()
-            for line in processed_lines:
-                if isinstance(line, RecipeChoice):
-                    grocery_total += line.ingredients
-                elif isinstance(line, Ingredient):
-                    grocery_total.add_ingredients(line)
+    @staticmethod
+    def grocery_list(processed_lines: list) -> GroceryList:
+        # Combine the groceries of all recipes and loose ingredients.
+        grocery_total = GroceryList()
+        for line in processed_lines:
+            if isinstance(line, RecipeChoice):
+                grocery_total += line.ingredients
+            elif isinstance(line, Ingredient):
+                grocery_total.add_ingredients(line)
 
-            return grocery_total
+        return grocery_total
 
-        def generate_menu_str(self) -> str:
-            '''Create a text based on the contents of the menu'''
-            newline = '\n'
-            text = ''
-            for item in self.processed_lines:
-                if isinstance(item, str):
-                    text += item + newline
-                elif isinstance(item, RecipeChoice):
-                    text += '== %s ==%s' % (str(item), newline)
-                    if item.name:
-                        text += item.how_to + newline
-                        for ing in item.ingredients.ingredients_formatted(sort='alphabetical', pretty=True,
-                                                                          include_comments=True):
-                            text += ing + newline
+    def generate_menu_str(self) -> str:
+        '''Create a text based on the contents of the menu'''
+        newline = '\n'
+        text = ''
+        for item in self.processed_lines:
+            if isinstance(item, str):
+                text += item + newline
+            elif isinstance(item, RecipeChoice):
+                text += '== %s ==%s' % (str(item), newline)
+                if item.name:
+                    text += item.how_to + newline
+                    for ing in item.ingredients.ingredients_formatted(sort='alphabetical', pretty=True,
+                                                                      include_comments=True):
+                        text += ing + newline
 
-            return text
+        return text
+
+    def generate_processed_menu_str(self) -> str:
+        """Create a string representation of the processed menu."""
+        return self.create_output_lines(self.processed_lines)

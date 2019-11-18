@@ -357,8 +357,7 @@ def test_RecipeChoice_class():
 
 
 def test_Cookbook_class():
-
-    cookbook = recipes.Cookbook(cookbook_reader.cookbook)  # cookbookcookbookcookbookcookbookcookbook
+    cookbook = recipes.Cookbook(cookbook_reader.recipes)  # cookbookcookbookcookbookcookbookcookbook
 
     # Tests various search patterns:
     assert isinstance(cookbook.find_recipe('fisk'), recipes.Recipe)
@@ -384,7 +383,7 @@ def test_Cookbook_class():
 
 
 def test_Cookbook_recipe_search_with_grocery_list():
-    cookbook = recipes.Cookbook(cookbook_reader.cookbook)
+    cookbook = recipes.Cookbook(cookbook_reader.recipes)
 
     # Verify that any search using the ingredients of a recipe return that specific recipe:
     for recipe in cookbook.recipes.values():
@@ -398,9 +397,9 @@ def test_Cookbook_recipe_search_with_grocery_list():
     response = cookbook.find_recipe_with_groceries(items, best=True, make_unavailable=False)
     assert fasit == response
 
-def test_Cookbook_recipe_regular_search():
 
-    cookbook = recipes.Cookbook(cookbook_reader.cookbook)  # cookbookcookbookcookbookcookbookcookbook
+def test_Cookbook_recipe_regular_search():
+    cookbook = recipes.Cookbook(cookbook_reader.recipes)  # cookbookcookbookcookbookcookbookcookbook
 
     # Search for fish until fish is not available. What is returned?
     cookbook.when_choice_on_empty_selection_reset_available = False
@@ -422,3 +421,55 @@ def test_Cookbook_recipe_regular_search():
         # which are made unavailable after each successful search, return None.
         # Everything else is a fail.
         assert isinstance(recipe, recipes.Recipe)
+
+
+def test_menu():
+    from groceries import Recipe, Cookbook
+
+    recipe1 = Recipe(
+        name='Carbonara',
+        tags=['pasta', 'fast', 'egg', 'bacon'],
+        time=20,
+        serves=2,
+        how_to='''Cook pasta. As pasta is preparing, fry bacon. When bacon is done, add frozen pees and continue frying
+        until pees are cooked. Mix finished pasta with bacon and pees. Add eggs and grated parmesan and stir. Season with
+        salt and pepper.''',
+        ingredients=[
+            '150 g spaghetti',
+            '100 g bacon',
+            '100 g frozen green pees',
+            '2 eggs',
+            '50 g parmesan',
+            'salt',
+            'pepper'
+        ])
+
+    recipe2 = Recipe(name="Mac'n cheese", tags=['pasta', 'fast'], time=5, serves=2,
+                     how_to='''Cook mac. Add cheese. serve.''', ingredients=['150 g maccaroni', '100 g cheese', ])
+
+    recipe3 = Recipe(name='Chocolate', tags=['sweet', 'dessert'], time=2, serves=2, how_to='''Eat chocolate.''',
+                     ingredients=['200 g chocolate'])
+
+    cookbook = Cookbook(recipes=[recipe1, recipe2, recipe3])
+
+    menu = cookbook.parse_menu('''Monday: mac cheese
+    Tuesday: sweet
+    Wednesday: pasta
+    2 tbs coffee
+    1 floz baked beans
+    1 banana
+    2 banana
+    4 liters coffee''')
+
+    assert menu.generate_processed_menu_str() == """Monday: Mac'n cheese til 2
+Tuesday: Chocolate til 2
+Wednesday: Carbonara til 2
+0.30 dl coffee
+0.30 dl baked beans
+1 banana
+2 banana
+4 l coffee"""
+
+    print(menu.groceries)
+
+    print(menu.recipes)

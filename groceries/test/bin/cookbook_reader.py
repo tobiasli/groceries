@@ -13,6 +13,7 @@
 import yaml
 import codecs
 import os
+from groceries.recipes import Recipe
 
 
 filename = os.path.join(os.path.dirname(__file__),'cookbook.yaml')
@@ -26,12 +27,13 @@ field_mapping = {
     }
 
 with codecs.open(filename, "r", "utf-8") as fid:
-    cookbook = yaml.load(fid, Loader=yaml.BaseLoader)
+    cookbook_file = yaml.load(fid, Loader=yaml.BaseLoader)
+recipes = list()
 
 # Wrapper for recipes, normalizing all tags and split tags:
-for recipe in cookbook:
+for recipe in cookbook_file:
     new_dict = {}
-    for k, v in cookbook[recipe].items():
+    for k, v in cookbook_file[recipe].items():
         assert k in field_mapping
         if field_mapping[k] == 'tags':
             v = [s.strip() for s in v.split(',')]
@@ -39,4 +41,4 @@ for recipe in cookbook:
             v = float(v)
         new_dict[field_mapping[k]] = v
     new_dict['name'] = recipe
-    cookbook[recipe] = new_dict
+    recipes.append(Recipe(**new_dict))
