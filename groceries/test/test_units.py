@@ -1,7 +1,8 @@
 """Tests for the unit-components of the groceries package."""
 import pytest
 import numpy
-from groceries import unit_definitions, units
+from groceries.configs import unit_definitions
+from groceries import units
 
 TEST_CASES_COMPONENTS = [
     ('mg', numpy.array([1000000, 1000000 * 4 / 3]), '1 - 1 1/3 kg'),

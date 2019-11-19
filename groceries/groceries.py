@@ -15,11 +15,11 @@
 import re
 import copy
 import numpy
-from typing import Union, Tuple, Dict, List, TYPE_CHECKING
+from typing import Union, Tuple, List, TYPE_CHECKING
 
 import tregex
-from groceries import units
-from groceries import constants
+from groceries import constants, units
+
 if TYPE_CHECKING:
     from groceries import recipes
 
@@ -98,7 +98,7 @@ class IngredientComponent:
         0 of something."""
         aprox_prefixes = '|'.join(constants.APROX_PREFIXES)
         number_combo = '^(?:%s)?[ ]*%s(?:[ -]+%s)?(?(1)|(?!))' % (
-            aprox_prefixes, constants.NUMBER_FORMAT_NAMED, constants.NUMBER_FORMAT_NAMED)
+            aprox_prefixes, constants.NUMBER_FORMAT, constants.NUMBER_FORMAT)
         all_amounts = []
         amount_text = ''
 
@@ -114,7 +114,7 @@ class IngredientComponent:
 
         if numbers:
             amount_text = numbers[0]
-            amount_alternatives = tregex.to_dict(constants.NUMBER_FORMAT_NAMED, amount_text)
+            amount_alternatives = tregex.to_dict(constants.NUMBER_FORMAT, amount_text)
 
             for a in amount_alternatives:
                 amount = 0

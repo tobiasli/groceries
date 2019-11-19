@@ -15,9 +15,9 @@ from typing import List, Tuple, Dict, Union
 
 import tregex
 
-from groceries import unit_definitions
+from groceries.configs import unit_definitions
+from groceries.configs.settings.default import settings
 from groceries.constants import *
-from groceries import user_defined_variables
 
 
 class Unit(object):
@@ -153,6 +153,7 @@ class Unit(object):
 
         amounts = self.scale_amount(normalized_amount)
 
+        fraction = False
         for integer, decimal, numerator, denominator, unit in amounts:
             fraction = False
             if decimal:
@@ -183,7 +184,7 @@ class Unit(object):
         formatted = '%(amount_string)s%(space)s%(unit)s' % locals()
 
         # Swap big fractions (1/2) with small fractions (½):
-        if user_defined_variables.SMALL_FRACTIONS:
+        if settings.small_fractions:
             for fraction in FRACTIONS_INVERSE:
                 formatted = sub(fraction, FRACTIONS_INVERSE[fraction], formatted)
 
@@ -258,7 +259,7 @@ class Units:
         units = []
         for dimension in unit_definitions.dimensions:
 
-            formatting = getattr(unit_definitions, user_defined_variables.UNIT_FORMATTING_VARIANT)
+            formatting = getattr(unit_definitions, settings.unit_formatting_variant)
 
             if dimension in formatting:
                 formatting = formatting[dimension]

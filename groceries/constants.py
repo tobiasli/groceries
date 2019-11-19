@@ -17,15 +17,8 @@ NUMBER_FORMAT = r'(?:%(start)s%(part1)s%(stop)s)?(?:(?<=\d) +)?(?:%(start)s%(par
     r'part2': r'(?P<numerator>\d+)/(?P<denominator>\d+)',
     r'stop': r'(?:(?=$)|(?=[^\d/]))',
     r'force_fail': r'(?(amount)|(?(numerator)|(?!)))'}
-NUMBER_FORMAT_NAMED = r'(?:%(start)s%(part1)s%(stop)s)?(?:(?<=\d) +)?(?:%(start)s%(part2)s%(stop)s)?%(force_fail)s' % {
-    r'start': r'(?:(?<=^)|(?<=[^\d/]))',
-    r'part1': r'(?P<amount>\d+(?:[\., ]\d+)?)',
-    r'part2': r'(?P<numerator>\d+)/(?P<denominator>\d+)',
-    r'stop': r'(?:(?=$)|(?=[^\d/]))',
-    r'force_fail': r'(?(amount)|(?(numerator)|(?!)))'
-}
 INTUITIVE_FRACTIONS = [2, 3, 4,
-                       8]  # These fractions are used for both parsing and formatting. Can be adjusted if needed.
+                       8]
 FRACTIONS = {  # Replace some special unicode characters with their plain text counterparts.
     '½': '1/2',
     '⅓': '1/3',
