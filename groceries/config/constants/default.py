@@ -1,4 +1,4 @@
-from groceries.config_types import Constants
+from groceries.config.config_types import Constants
 
 constants = Constants(
     number_format=r'(?:%(start)s%(part1)s%(stop)s)?(?:(?<=\d) +)?(?:%(start)s%(part2)s%(stop)s)?%(force_fail)s' % {
@@ -29,6 +29,6 @@ constants = Constants(
         '⅞': '7/8',
     },
     default_recipe_servings=2,
-    ingredient_match_limit=0.8,
+    ingredient_match_limit=0.9,
     week_plan_comment_prefix='#'
 )

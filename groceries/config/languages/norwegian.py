@@ -1,8 +1,8 @@
 """All config parameters related to language components."""
 
-from groceries.config_types import LanguagePack
+from groceries.config.config_types import Language
 
-language_pack = LanguagePack(
+language = Language(
     aprox_prefixes=[r'ca\.?', r'aprox\.?', r'aprx\.?', r'aproximately', r'omtrent', r'minst', r'circar'],
     no_recipe_name='annet',
     servings_prefix='til',

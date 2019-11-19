@@ -18,13 +18,15 @@ import numpy
 from typing import Union, Tuple, List, TYPE_CHECKING
 
 import tregex
-from groceries import constants, units
+from groceries.units import Units, Unit
+
+from groceries.config.config_handler import config
 
 if TYPE_CHECKING:
     from groceries import recipes
 
 # Construct units:
-UNITS = units.Units()
+UNITS = Units()
 
 
 class IngredientComponent:
@@ -84,8 +86,8 @@ class IngredientComponent:
 
         ingredient_input = ingredient_input.strip()
 
-        for fraction in constants.FRACTIONS:
-            ingredient_input = re.sub(fraction, constants.FRACTIONS[fraction], ingredient_input)
+        for fraction in config.constants.fractions:
+            ingredient_input = re.sub(fraction, config.constants.fractions[fraction], ingredient_input)
 
         return ingredient_input
 
@@ -96,9 +98,9 @@ class IngredientComponent:
         all numbers present in the range ([2,  2.5]). If no amount is found,
         method returns None,  as an unspecified is something different than
         0 of something."""
-        aprox_prefixes = '|'.join(constants.APROX_PREFIXES)
+        aprox_prefixes = '|'.join(config.language.aprox_prefixes)
         number_combo = '^(?:%s)?[ ]*%s(?:[ -]+%s)?(?(1)|(?!))' % (
-            aprox_prefixes, constants.NUMBER_FORMAT, constants.NUMBER_FORMAT)
+            aprox_prefixes, config.constants.number_format, config.constants.number_format)
         all_amounts = []
         amount_text = ''
 
@@ -114,7 +116,7 @@ class IngredientComponent:
 
         if numbers:
             amount_text = numbers[0]
-            amount_alternatives = tregex.to_dict(constants.NUMBER_FORMAT, amount_text)
+            amount_alternatives = tregex.to_dict(config.constants.number_format, amount_text)
 
             for a in amount_alternatives:
                 amount = 0
@@ -132,7 +134,7 @@ class IngredientComponent:
         return all_amounts, amount_text
 
     @staticmethod
-    def _parse_unit(ing: str) -> Tuple[units.Unit, Union[float, int], str]:
+    def _parse_unit(ing: str) -> Tuple[Unit, Union[float, int], str]:
         """Get the unit object of the ingredient."""
         unit_text = re.findall(r'^\w+', ing)
         if not unit_text:
@@ -218,8 +220,8 @@ class Ingredient:
         We can then continue with combining the components of each ingredient."""
         return self.name == other.name and self.unit == other.unit
 
-    def contains(self, other: object, amount: bool = True,
-                 aprox_name_limit: Union[float, int] = constants.INGREDIENT_APROX_NAME_LIMIT, verbose: bool = False) -> \
+    def contains(self, other: "Ingredient", amount: bool = True,
+                 aprox_name_limit: Union[float, int] = config.constants.ingredient_match_limit, verbose: bool = False) -> \
             Union[dict, bool]:
         """Check if one ingredient is a superset of another ingredient. Returns
         variants of (bool, bool) according to the different matches of name and
@@ -230,19 +232,22 @@ class Ingredient:
         name_match = tregex.similarity(self.name, other.name)
 
         # Punish mismatch stricter if the word is short. Punishment is reduced to zero at 6 characters.
-        name_length_punish_limit = 5
-        average_length = (len(self.name) + len(other.name)) / 2
+        name_length_punish_limit = 6
 
-        if average_length <= name_length_punish_limit:
-            exponent = max([0, name_length_punish_limit - (len(self.name) + len(other.name)) / 2]) + 3
-            name_match = name_match ** exponent
+        min_name_length = min([len(self.name), len(other.name)])
+        new_limit = aprox_name_limit + (1 - aprox_name_limit) * (name_length_punish_limit - min_name_length) / name_length_punish_limit
+        limit = max(aprox_name_limit, new_limit)
 
-        name_match *= 100
+
+        # average_length = (len(self.name) + len(other.name)) / 2
+        # if average_length <= name_length_punish_limit:
+        #     exponent = max([0, name_length_punish_limit - (len(self.name) + len(other.name)) / 2]) + 3
+        #     name_match = name_match ** exponent
 
         output['name'] = name_match
-        if name_match >= aprox_name_limit:
+        if name_match >= limit:
             if not amount or self.amount().size == 0 or other.amount().size == 0:
-                output['amount'] = 100  # No specified amount means amount may be unimportant.
+                output['amount'] = 1  # No specified amount means amount may be unimportant.
                 output['result'] = True
             elif amount:
                 # Calculate scores for amounts:
@@ -251,7 +256,7 @@ class Ingredient:
 
                 if self.unit == other.unit:
                     if self_amount >= other_amount:
-                        output['amount'] = 100  # Full score of other is less than self.
+                        output['amount'] = 1  # Full score of other is less than self.
                         # amount = 0 if other more than self.
                         output['result'] = True
                 else:
@@ -348,7 +353,7 @@ class Ingredient:
                     component_dict['recipe_multiplier'] = ing.recipe.multiplier
                     component_dict['recipe_scale'] = ing.recipe.scale
             else:
-                component_dict['recipe'] = constants.NO_RECIPE_NAME
+                component_dict['recipe'] = config.constants.no_recipe_name
 
             component_dict['name'] = ing.name
             component_dict['amount'] = ing.amount_formatted()
@@ -451,7 +456,7 @@ class GroceryList:
         return [ing.ingredient_formatted(pretty=pretty, include_comments=include_comments) for ing in
                 self.ingredients(sort)]
 
-    def ingredients(self, sort: str = None, collate: bool = True) -> List[object]:
+    def ingredients(self, sort: str = None, collate: bool = True) -> List[Ingredient]:
         """Return collated list of ingredients in GroceryList. CONSIDER REVISING
          FOR SPEED. Might be just as effective to solve the collation right
          away when adding the individual ingredients. Or maybe not."""
@@ -569,7 +574,7 @@ class GroceryList:
         new_ingredients = [Ingredient(ing) for ing in self.ingredient_list]
         return new_ingredients
 
-    def contains(self, ingredient: object, amount: bool = True, verbose: bool = False):
+    def contains(self, ingredient: Ingredient, amount: bool = True, verbose: bool = False):
         """Check if an ingredient exists within the GroceryList. Returns
             (True, True) if name and amounts are present.
             (True, False) if name and not amount is present.
@@ -596,7 +601,7 @@ class GroceryList:
 
     def compare_with(self, other: object, amount: bool = True, verbose: bool = False) -> Union[List[float], float]:
         """Compare the contents of one list with the contents of this list. If
-        self is a superset of other (taking amounts into account) a score of 100
+        self is a superset of other (taking amounts into account) a score of 1
         is returned. For mismatches in amounts or names, reduce score."""
 
         # TODO: This method is probably not done either.
@@ -606,7 +611,7 @@ class GroceryList:
         score_vector = []
         for other_ing in other.ingredients():
             match = self.contains(other_ing, amount=amount, verbose=True)
-            score = min([match['name'] * 0.7 + match['amount'] * 0.3, 100])  # Cap at 100.
+            score = min([match['name'] * 0.7 + match['amount'] * 0.3, 1])  # Cap at 100.
 
             score_vector += [(other_ing.name, score, match['result'], match['name'], match['amount'])]
 

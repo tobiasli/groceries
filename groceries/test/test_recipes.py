@@ -12,6 +12,7 @@ import unittest
 
 from groceries import recipes, groceries
 from groceries.test.bin import cookbook_reader
+from groceries import Recipe, Cookbook, Menu
 
 RECIPE_EXAMPLE_1 = {}
 RECIPE_EXAMPLE_1['name'] = 'Chili con Carne'
@@ -424,7 +425,6 @@ def test_Cookbook_recipe_regular_search():
 
 
 def test_menu():
-    from groceries import Recipe, Cookbook
 
     recipe1 = Recipe(
         name='Carbonara',
@@ -452,7 +452,7 @@ def test_menu():
 
     cookbook = Cookbook(recipes=[recipe1, recipe2, recipe3])
 
-    menu = cookbook.parse_menu('''Monday: mac cheese
+    menu = Menu(cookbook, '''Monday: mac cheese
     Tuesday: sweet
     Wednesday: pasta
     2 tbs coffee

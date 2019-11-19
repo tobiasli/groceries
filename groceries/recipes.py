@@ -17,19 +17,9 @@ from typing import Union, List, Sequence, Tuple
 import tregex
 from groceries.groceries import GroceryList, Ingredient
 
-from groceries.constants import *
-
-# String construction for Menu parsing:
-NUMBER = r'\d+(?:[,\.]\d+)?'
-W = r'\s*'  # General seperator
-
-TAG = r'(?P<plan_tag>.+)'
-TAG_SEPARATOR = ':'
-RECIPE = r'(?P<recipe>.+?)?'
-SCALING = r'(?:[x\*] ?(?P<multiplier>%(NUMBER)s)|%(MADE_FOR_VARIANT)s (?P<made_for>%(NUMBER)s)|$)' % locals()
-START = r'^'
-
-PATTERN = START + W + W.join([TAG, TAG_SEPARATOR, RECIPE, SCALING]) + W
+from groceries.config.constants.default import constants
+from groceries.config.languages.norwegian import language
+from groceries.config.menu_format.simple_text_menu import menu_format
 
 
 class Recipe:
@@ -76,7 +66,7 @@ class RecipeChoice(Recipe):
             self.made_for = made_for
             self.multiplier = multiplier
         else:
-            self.made_for = DEFAULT_NUMER_OF_PEOPLE
+            self.made_for = constants.default_recipe_servings
             self.multiplier = 1
 
         if self.serves:
@@ -319,6 +309,16 @@ class Menu(object):
         self.cookbook = cookbook
         self.recipes = []
         self.groceries = GroceryList()
+
+        # String construction for Menu parsing:
+        sep = r'\s*'  # General seperator
+        start = r'^'
+        tag_pattern = fr'(?P<plan_tag>{menu_format.tag_identifier})'
+        recipe_pattern = fr'(?P<recipe>{menu_format.recipe_identifier})?'
+        scaling_pattern = fr'(?:[x\*] ?(?P<multiplier>{menu_format.scaling_number_format})|{language.servings_prefix} (?P<made_for>{menu_format.scaling_number_format})|$)'
+
+        self.menu_pattern = start + sep + sep.join([tag_pattern, menu_format.tag_separator, recipe_pattern, scaling_pattern]) + sep
+
         self.input_plan, self.input_lines, self.processed_lines, self.processed_plan = self.process_plan(menu_text)
 
         self.process_input()
@@ -351,16 +351,16 @@ class Menu(object):
 
     def process_line(self, line: str) -> Union[str, Ingredient, RecipeChoice]:
 
-        line = re.sub(RECIPE_NOT_FOUND_TAG, '', line)
+        line = re.sub(language.recipe_not_found_message, '', line)
 
         if not line:
             return line
 
-        elif line[0] == WEEK_PLAN_COMMENT_START:
+        elif line[0] == constants.week_plan_comment_prefix:
             return line
 
-        elif TAG_SEPARATOR in line:
-            match = tregex.smart(PATTERN, line)[0]
+        elif menu_format.tag_separator in line:
+            match = tregex.to_dict(self.menu_pattern, line)[0]
 
             if match['recipe'] == '-':
                 return RecipeChoice(plan_tag=match['plan_tag'])
@@ -377,7 +377,7 @@ class Menu(object):
                     return RecipeChoice(recipe=recipe, plan_tag=match['plan_tag'], made_for=match['made_for'],
                                         multiplier=match['multiplier'])
                 else:
-                    return RecipeChoice(Recipe(name=RECIPE_NOT_FOUND_TAG), plan_tag=match[
+                    return RecipeChoice(Recipe(name=language.recipe_not_found_message), plan_tag=match[
                         'plan_tag'])  # Blank recipe choice. Makes handling later easier as other methods don't fail.
 
         else:
@@ -395,13 +395,13 @@ class Menu(object):
                 recipe = line.name
 
                 if not recipe:
-                    output_lines += ['%s%s %s' % (tag, TAG_SEPARATOR, NO_RECIPE)]
+                    output_lines += ['%s%s %s' % (tag, menu_format.tag_separator, language.no_recipe)]
                 else:
                     if not line.multiplier == 1:
                         scale = 'x%0.1f' % line.multiplier
                     else:
-                        scale = '%s %d' % (MADE_FOR_VARIANT, line.made_for)
-                    output_lines += ['%s%s %s %s' % (tag, TAG_SEPARATOR, recipe, scale)]
+                        scale = '%s %d' % (language.servings_prefix, line.made_for)
+                    output_lines += ['%s%s %s %s' % (tag, menu_format.tag_separator, recipe, scale)]
 
             elif isinstance(line, Ingredient):
                 output_lines += [line.ingredient_formatted()]

@@ -15,9 +15,7 @@ from typing import List, Tuple, Dict, Union
 
 import tregex
 
-from groceries.configs import unit_definitions
-from groceries.configs.settings.default import settings
-from groceries.constants import *
+from groceries.config.config_handler import config
 
 
 class Unit(object):
@@ -40,14 +38,14 @@ class Unit(object):
         # Everything else is fetched from the Quantity object from pint.
         self.dimension = dimension
         if not units:
-            units = {'': unit_definitions.empty_unit}
+            units = {'': config.unit_definition.constants.empty_unit}
         self.lookup_dict = self.construct_lookup_dict(units)
 
         self.pattern = r'(?:(?<=[\d\W])|(?<=^))(?P<unit>' + '|'.join(self.lookup_dict.keys()) + r')(?:(?=\W)|(?=$))'
 
         if not formatting:
             unit = list(self.lookup_dict.values())[0]['unit']
-            formatting = [{'unit': unit, 'checks': [unit_definitions.always_true]}]
+            formatting = [{'unit': unit, 'checks': [config.unit_definition.constants.always_true]}]
 
         self.formatting = formatting
 
@@ -184,9 +182,9 @@ class Unit(object):
         formatted = '%(amount_string)s%(space)s%(unit)s' % locals()
 
         # Swap big fractions (1/2) with small fractions (½):
-        if settings.small_fractions:
-            for fraction in FRACTIONS_INVERSE:
-                formatted = sub(fraction, FRACTIONS_INVERSE[fraction], formatted)
+        if config.settings.small_fractions:
+            for fraction in config.constants.fractions_inverse:
+                formatted = sub(fraction, config.constants.fractions_inverse[fraction], formatted)
 
         return formatted
 
@@ -198,7 +196,7 @@ class Unit(object):
 
         precision = 4  # decimal places
 
-        for i in INTUITIVE_FRACTIONS:
+        for i in config.constants.intuitive_denominators:
             rest = math.fmod(round(number, precision), round(1 / float(i), precision))  # Multiply by 100 so that
             if rest < 0.001:
                 numerator = round((number - rest) * i)
@@ -212,7 +210,7 @@ class Unit(object):
         base_scale = 1
         for unit, properties in units.items():
             # TODO: It may be possible to drop the empty_unit defaults, and rather check if the key is present.
-            properties.update({k: v for k, v in unit_definitions.empty_unit.items() if not k in properties.keys()})
+            properties.update({k: v for k, v in config.unit_definition.constants.empty_unit.items() if not k in properties.keys()})
 
             prefix_loop = ['']
             # Create lookup_dictionary:
@@ -257,9 +255,9 @@ class Units:
     @staticmethod
     def _define_units() -> list:
         units = []
-        for dimension in unit_definitions.dimensions:
+        for dimension in config.unit_definition.units:
 
-            formatting = getattr(unit_definitions, settings.unit_formatting_variant)
+            formatting = config.unit_definition.formatting
 
             if dimension in formatting:
                 formatting = formatting[dimension]
@@ -267,11 +265,11 @@ class Units:
                 formatting = []
 
             if dimension == 'other':
-                for unit, properties in unit_definitions.dimensions[dimension].items():
+                for unit, properties in config.unit_definition.units[dimension].items():
                     custom_dimension = dimension + '_' + unit
                     units += [Unit(custom_dimension, {unit: properties}, formatting)]
             else:
-                units += [Unit(dimension, unit_definitions.dimensions[dimension], formatting)]
+                units += [Unit(dimension, config.unit_definition.units[dimension], formatting)]
         return units
 
     def match(self, string: str) -> Tuple[Unit, Union[float, int], str]:
