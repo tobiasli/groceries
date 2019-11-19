@@ -16,77 +16,80 @@ import math
 from groceries.config.constants.default import constants
 
 
-# Wrapper for formatting check functions:
-def less_than_or_equal_to(base):
-    def le_base(candidate):
-        return base >= candidate
+class Constants:
+    metric_prefixes = {
+        'k': 1000.0,
+        'kilo': 1000.0,
+        'h': 100.0,
+        'hekto': 100.0,
+        'de': 10.0,
+        'da': 10.0,  # English shortform
+        'deca': 10.0,
+        'd': 0.1,
+        'deci': 0.1,
+        'c': 0.01,
+        'centi': 0.01,
+        'm': 0.001,
+        'milli': 0.001
+    }
 
-    return le_base
+    empty_unit = {
+        'plural': '',
+        'variants': [],
+        'prefixes': {},
+        'scale': 1
+    }
+    # Wrapper for formatting check functions:
+    @staticmethod
+    def less_than_or_equal_to(base):
+        def le_base(candidate):
+            return base >= candidate
+
+        return le_base
+
+    @staticmethod
+    def less_than(base):
+        def lt_base(candidate):
+            return base > candidate
+
+        return lt_base
+
+    @staticmethod
+    def greater_than_or_equal_to(base):
+        def ge_base(candidate):
+            return base <= candidate
+
+        return ge_base
+
+    @staticmethod
+    def greater_than(base):
+        def gt_base(candidate):
+            return base < candidate
+
+        return gt_base
+
+    @staticmethod
+    def equal_to(base):
+        def eq_base(candidate):
+            return base == candidate
+
+        return eq_base
+
+    @staticmethod
+    def fraction_of(base):
+        def fraction_base(candidate):
+            number = candidate / base
+            for i in constants.intuitive_denominators:
+                rest = math.fmod(number, 1 / float(i))
+                if rest < 0.001:
+                    return True
+            return False
+
+        return fraction_base
+
+    @staticmethod
+    def always_true(candidate):
+        return True
 
 
-def less_than(base):
-    def lt_base(candidate):
-        return base > candidate
-
-    return lt_base
-
-
-def greater_than_or_equal_to(base):
-    def ge_base(candidate):
-        return base <= candidate
-
-    return ge_base
-
-
-def greater_than(base):
-    def gt_base(candidate):
-        return base < candidate
-
-    return gt_base
-
-
-def equal_to(base):
-    def eq_base(candidate):
-        return base == candidate
-
-    return eq_base
-
-
-def fraction_of(base):
-    def fraction_base(candidate):
-        number = candidate / base
-        for i in constants.intuitive_denominators:
-            rest = math.fmod(number, 1 / float(i))
-            if rest < 0.001:
-                return True
-        return False
-
-    return fraction_base
-
-
-def always_true(candidate):
-    return True
-
-
-metric_prefixes = {
-    'k': 1000.0,
-    'kilo': 1000.0,
-    'h': 100.0,
-    'hekto': 100.0,
-    'de': 10.0,
-    'da': 10.0,  # English shortform
-    'deca': 10.0,
-    'd': 0.1,
-    'deci': 0.1,
-    'c': 0.01,
-    'centi': 0.01,
-    'm': 0.001,
-    'milli': 0.001
-}
-
-empty_unit = {
-    'plural': '',
-    'variants': [],
-    'prefixes': {},
-    'scale': 1
-}
+unit_constants = Constants()
