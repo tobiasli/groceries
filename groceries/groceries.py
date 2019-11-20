@@ -18,15 +18,12 @@ import numpy
 from typing import Union, Tuple, List, TYPE_CHECKING
 
 import tregex
-from groceries.units import Units, Unit
+from groceries.units import units, Unit
 
 from groceries.config.config_handler import config
 
 if TYPE_CHECKING:
     from groceries import recipes
-
-# Construct units:
-UNITS = Units()
 
 
 class IngredientComponent:
@@ -142,7 +139,7 @@ class IngredientComponent:
         else:
             unit_text = unit_text[0]
 
-        unit, scale, text = UNITS.match(unit_text)
+        unit, scale, text = units.match(unit_text)
 
         return unit, scale, text
 

@@ -67,6 +67,7 @@ class Constants(ConfigBase):
     def __init__(self,
                  number_format: str,
                  intuitive_denominators: ty.List[int],
+                 fraction_rest_limit: Number,
                  fractions: ty.Dict[str, str],
                  default_recipe_servings: int,
                  ingredient_match_limit: float,
@@ -76,6 +77,7 @@ class Constants(ConfigBase):
         Class containing all constants used in various places around the groceries module.
         :param number_format: This is a complex regex pattern identifying all kinds of numbers.
         :param intuitive_denominators: A list of denominators that are in reasonable use when cooking food.
+        :param fraction_rest_limit: Rounding limit for chosing to use an intuitive fraction.
         :param fractions: A lookup table between unicode small fractions and regular ascii fractions.
         :param default_recipe_servings: The default amount of servings if not specified for a Recipe.
         :param ingredient_match_limit: The difflib.Sequence score lower limit for matching similar ingredients.
@@ -84,6 +86,7 @@ class Constants(ConfigBase):
         self.number_format = number_format
         self.intuitive_denominators = intuitive_denominators
         self.fractions = fractions
+        self.fraction_rest_limit = fraction_rest_limit
         self.fractions_inverse = {v: k for k, v in self.fractions.items()}
         self.default_recipe_servings = default_recipe_servings
         self.ingredient_match_limit = ingredient_match_limit

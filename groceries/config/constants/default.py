@@ -11,6 +11,9 @@ constants = Constants(
     # These intuitive_denominators are used for both parsing and formatting. Can be adjusted if needed.
     intuitive_denominators=[2, 3, 4, 8],
 
+    # Rounding limit for chosing to use an intuitive fraction:
+    fraction_rest_limit=0.001,
+
     fractions={  # Replace some special unicode characters with their plain text counterparts.
         '½': '1/2',
         '⅓': '1/3',

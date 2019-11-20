@@ -45,7 +45,7 @@ class Unit(object):
 
         if not formatting:
             unit = list(self.lookup_dict.values())[0]['unit']
-            formatting = [{'unit': unit, 'checks': [config.unit_definition.constants.always_true]}]
+            formatting = [{'unit': unit, 'checks': [config.unit_definition.constants.AlwaysTrue()]}]
 
         self.formatting = formatting
 
@@ -242,15 +242,22 @@ class Unit(object):
 
 
 class Units:
-    """Units class, for matching and handling Unit objects."""
+    """Units class, for matching and handling Unit objects. Definition of all units available to groceries.
+        - A unit is identified by a combination of key, 'plural' and 'variants'.
+        - The string representation of a unit is the key for quantity = 1 and 'plural' for quantity <> 1.
+        - A unit with scale and base_unit can be normalized to the specified base unit if wanted.
+        - "other" are dimentionless units of measurement with no normalization.
+        - Unused dictionary keys do not need to be specified as they are covered by default values.
+"""
 
-    def __init__(self, definition_choice: str = None) -> None:
-        # TODO: Build optional formatting selection from unit_definitions
-        ##        if not definition_choice:
-        ##            import unit_definitions as unit_definitions
+    def __init__(self) -> None:
 
         self.units = self._define_units()
         self.no_unit = Unit()  # Empty unit with default, blank properties for those groceries without a unit.
+
+    def reload_units(self) -> None:
+        """Reload the units based on the config."""
+        self.units = self._define_units()
 
     @staticmethod
     def _define_units() -> list:
@@ -278,3 +285,5 @@ class Units:
             if unit:
                 return unit, scale, text
         return self.no_unit, 1, ''
+
+units = Units()

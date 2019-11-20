@@ -1,5 +1,5 @@
 from groceries.config.config_types import UnitDefinition
-from groceries.config.unit_definitions.constants import unit_constants as c
+from groceries.config.unit_definition.unit_constants import unit_constants as c
 
 _units = {
     'length': {
@@ -105,37 +105,37 @@ _units = {
     }
 }
 _formatting = {
-        'length': [
-            {'unit': 'cm', 'checks': [c.equal_to(0)]},
-            {'unit': 'inch', 'checks': [c.less_than(0.5), c.fraction_of(_units['length']['inch']['scale'])]},
-            {'unit': 'mm', 'checks': [c.less_than(0.01)]},
-            {'unit': 'cm', 'checks': [c.greater_than_or_equal_to(0.01), c.less_than(1)]},
-            {'unit': 'm', 'checks': [c.always_true]},  # Last check is always true, so the unit defaults to 'm'.
-        ],
-        'mass': [
-            {'unit': 'g', 'checks': [c.equal_to(0)]},
-            {'unit': 'lb', 'checks': [c.less_than(2000), c.fraction_of(_units['mass']['lb']['scale'])]},
-            {'unit': 'oz', 'checks': [c.less_than(1000), c.fraction_of(_units['mass']['oz']['scale'])]},
-            {'unit': 'kg', 'checks': [c.greater_than_or_equal_to(1000)]},
-            {'unit': 'g', 'checks': [c.less_than(1000), c.greater_than_or_equal_to(0.5), c.fraction_of(1)]},
-            {'unit': 'mg', 'checks': [c.less_than(1)]},
-        ],
-        'volume': [
-            {'unit': 'l', 'checks': [c.equal_to(0)]},
-            {'unit': 'cup', 'checks': [c.fraction_of(_units['volume']['cup']['scale'])]},
-            {'unit': 'l', 'checks': [c.greater_than_or_equal_to(1)]},
-            {'unit': 'l', 'checks': [c.greater_than_or_equal_to(0.5), c.fraction_of(1)]},
-            {'unit': 'dl', 'checks': [c.greater_than_or_equal_to(0.01), c.less_than(1)]},
-            {'unit': 'ts', 'checks': [c.less_than(0.015), c.greater_than_or_equal_to(0.005 / 4),
-                                      c.fraction_of(_units['volume']['ts']['scale'])]},
-            {'unit': 'ss', 'checks': [c.less_than(0.01), c.greater_than_or_equal_to(0.015 / 4),
-                                      c.fraction_of(_units['volume']['ss']['scale'])]},
-            {'unit': 'ml', 'checks': [c.less_than(0.1)]},
-        ],
-        'hvitløk': [
-            {'unit': 'hel', 'checks': [c.greater_than_or_equal_to(8)]}
-        ]
-    }
+    'length': [
+        {'unit': 'cm', 'checks': [c.EqualTo(0)]},
+        {'unit': 'inch', 'checks': [c.LessThan(0.5), c.FractionOf(_units['length']['inch']['scale'])]},
+        {'unit': 'mm', 'checks': [c.LessThan(0.01)]},
+        {'unit': 'cm', 'checks': [c.GreaterThanOrEqualTo(0.01), c.LessThan(1)]},
+        {'unit': 'm', 'checks': [c.AlwaysTrue()]},  # Last check is always true, so the unit defaults to 'm'.
+    ],
+    'mass': [
+        {'unit': 'g', 'checks': [c.EqualTo(0)]},
+        {'unit': 'lb', 'checks': [c.LessThan(2000), c.FractionOf(_units['mass']['lb']['scale'])]},
+        {'unit': 'oz', 'checks': [c.LessThan(1000), c.FractionOf(_units['mass']['oz']['scale'])]},
+        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(1000)]},
+        {'unit': 'g', 'checks': [c.LessThan(1000), c.GreaterThanOrEqualTo(0.5), c.FractionOf(1)]},
+        {'unit': 'mg', 'checks': [c.LessThan(1)]},
+    ],
+    'volume': [
+        {'unit': 'l', 'checks': [c.EqualTo(0)]},
+        {'unit': 'cup', 'checks': [c.FractionOf(_units['volume']['cup']['scale'])]},
+        {'unit': 'l', 'checks': [c.GreaterThanOrEqualTo(1)]},
+        {'unit': 'l', 'checks': [c.GreaterThanOrEqualTo(0.5), c.FractionOf(1)]},
+        {'unit': 'dl', 'checks': [c.GreaterThanOrEqualTo(0.01), c.LessThan(1)]},
+        {'unit': 'ts', 'checks': [c.LessThan(0.015), c.GreaterThanOrEqualTo(0.005 / 4),
+                                  c.FractionOf(_units['volume']['ts']['scale'])]},
+        {'unit': 'ss', 'checks': [c.LessThan(0.01), c.GreaterThanOrEqualTo(0.015 / 4),
+                                  c.FractionOf(_units['volume']['ss']['scale'])]},
+        {'unit': 'ml', 'checks': [c.LessThan(0.1)]},
+    ],
+    'hvitløk': [
+        {'unit': 'hel', 'checks': [c.GreaterThanOrEqualTo(8)]}
+    ]
+}
 unit_definition = UnitDefinition(
     units=_units,
     formatting=_formatting,

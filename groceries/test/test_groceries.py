@@ -276,10 +276,7 @@ def test_grocerylist_contains():
     not_contains = ['salat', 'senep', 'brød', 'suketter']
 
     for item in not_contains:
-        try:
-            assert not superset_list.contains(groceries.Ingredient(item))
-        except:
-            abs(1)
+        assert not superset_list.contains(groceries.Ingredient(item))
 
     contains_without_amount = ['200 g smør', '1 oz kanel', '100 tonn sukker']
 

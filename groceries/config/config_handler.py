@@ -3,7 +3,7 @@ from groceries.config.constants.default import constants as default_constants
 from groceries.config.settings.metric_imperial import settings as default_settings
 from groceries.config.languages.english import language as default_language
 from groceries.config.menu_format.simple_text_menu import menu_format as default_menu_format
-from groceries.config.unit_definitions.metric_imperial import unit_definition as default_unit_definition
+from groceries.config.unit_definition.metric_imperial import unit_definition as default_unit_definition
 
 
 class ConfigHandler:
