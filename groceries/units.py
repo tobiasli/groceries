@@ -15,9 +15,7 @@ from typing import List, Tuple, Dict, Union
 
 import tregex
 
-from groceries import unit_definitions
-from groceries.constants import *
-from groceries import user_defined_variables
+from groceries.config.config_handler import config
 
 
 class Unit(object):
@@ -40,14 +38,14 @@ class Unit(object):
         # Everything else is fetched from the Quantity object from pint.
         self.dimension = dimension
         if not units:
-            units = {'': unit_definitions.empty_unit}
+            units = {'': config.unit_definition.constants.empty_unit}
         self.lookup_dict = self.construct_lookup_dict(units)
 
         self.pattern = r'(?:(?<=[\d\W])|(?<=^))(?P<unit>' + '|'.join(self.lookup_dict.keys()) + r')(?:(?=\W)|(?=$))'
 
         if not formatting:
             unit = list(self.lookup_dict.values())[0]['unit']
-            formatting = [{'unit': unit, 'checks': [unit_definitions.always_true]}]
+            formatting = [{'unit': unit, 'checks': [config.unit_definition.constants.AlwaysTrue()]}]
 
         self.formatting = formatting
 
@@ -153,6 +151,7 @@ class Unit(object):
 
         amounts = self.scale_amount(normalized_amount)
 
+        fraction = False
         for integer, decimal, numerator, denominator, unit in amounts:
             fraction = False
             if decimal:
@@ -183,9 +182,9 @@ class Unit(object):
         formatted = '%(amount_string)s%(space)s%(unit)s' % locals()
 
         # Swap big fractions (1/2) with small fractions (½):
-        if user_defined_variables.SMALL_FRACTIONS:
-            for fraction in FRACTIONS_INVERSE:
-                formatted = sub(fraction, FRACTIONS_INVERSE[fraction], formatted)
+        if config.settings.small_fractions:
+            for fraction in config.constants.fractions_inverse:
+                formatted = sub(fraction, config.constants.fractions_inverse[fraction], formatted)
 
         return formatted
 
@@ -197,7 +196,7 @@ class Unit(object):
 
         precision = 4  # decimal places
 
-        for i in INTUITIVE_FRACTIONS:
+        for i in config.constants.intuitive_denominators:
             rest = math.fmod(round(number, precision), round(1 / float(i), precision))  # Multiply by 100 so that
             if rest < 0.001:
                 numerator = round((number - rest) * i)
@@ -211,7 +210,7 @@ class Unit(object):
         base_scale = 1
         for unit, properties in units.items():
             # TODO: It may be possible to drop the empty_unit defaults, and rather check if the key is present.
-            properties.update({k: v for k, v in unit_definitions.empty_unit.items() if not k in properties.keys()})
+            properties.update({k: v for k, v in config.unit_definition.constants.empty_unit.items() if not k in properties.keys()})
 
             prefix_loop = ['']
             # Create lookup_dictionary:
@@ -243,22 +242,29 @@ class Unit(object):
 
 
 class Units:
-    """Units class, for matching and handling Unit objects."""
+    """Units class, for matching and handling Unit objects. Definition of all units available to groceries.
+        - A unit is identified by a combination of key, 'plural' and 'variants'.
+        - The string representation of a unit is the key for quantity = 1 and 'plural' for quantity <> 1.
+        - A unit with scale and base_unit can be normalized to the specified base unit if wanted.
+        - "other" are dimentionless units of measurement with no normalization.
+        - Unused dictionary keys do not need to be specified as they are covered by default values.
+"""
 
-    def __init__(self, definition_choice: str = None) -> None:
-        # TODO: Build optional formatting selection from unit_definitions
-        ##        if not definition_choice:
-        ##            import unit_definitions as unit_definitions
+    def __init__(self) -> None:
 
         self.units = self._define_units()
         self.no_unit = Unit()  # Empty unit with default, blank properties for those groceries without a unit.
 
+    def reload_units(self) -> None:
+        """Reload the units based on the config."""
+        self.units = self._define_units()
+
     @staticmethod
     def _define_units() -> list:
         units = []
-        for dimension in unit_definitions.dimensions:
+        for dimension in config.unit_definition.units:
 
-            formatting = getattr(unit_definitions, user_defined_variables.UNIT_FORMATTING_VARIANT)
+            formatting = config.unit_definition.formatting
 
             if dimension in formatting:
                 formatting = formatting[dimension]
@@ -266,11 +272,11 @@ class Units:
                 formatting = []
 
             if dimension == 'other':
-                for unit, properties in unit_definitions.dimensions[dimension].items():
+                for unit, properties in config.unit_definition.units[dimension].items():
                     custom_dimension = dimension + '_' + unit
                     units += [Unit(custom_dimension, {unit: properties}, formatting)]
             else:
-                units += [Unit(dimension, unit_definitions.dimensions[dimension], formatting)]
+                units += [Unit(dimension, config.unit_definition.units[dimension], formatting)]
         return units
 
     def match(self, string: str) -> Tuple[Unit, Union[float, int], str]:
@@ -279,3 +285,5 @@ class Units:
             if unit:
                 return unit, scale, text
         return self.no_unit, 1, ''
+
+units = Units()

@@ -1,7 +1,8 @@
 """Tests for the unit-components of the groceries package."""
 import pytest
 import numpy
-from groceries import unit_definitions, units
+from groceries.config.config_handler import config
+from groceries import units
 
 TEST_CASES_COMPONENTS = [
     ('mg', numpy.array([1000000, 1000000 * 4 / 3]), '1 - 1 1/3 kg'),
@@ -22,15 +23,8 @@ TEST_CASES_COMPONENTS = [
 ]
 
 
-def test_definition_import():
-    properties = ['metric_prefixes', 'empty_unit', 'dimensions', 'metric_imperial_formatting', 'metric_formatting']
-
-    for p in properties:
-        assert hasattr(unit_definitions, p)
-
-
 def test_unit_match():
-    unit = units.Unit(dimension='mass', units=unit_definitions.dimensions['mass'])
+    unit = units.Unit(dimension='mass', units=config.unit_definition.units['mass'])
 
     assert unit.match('2 kg')
     assert unit.match('kg')

@@ -46,7 +46,7 @@ print(gl)
 #        2.91 kg sugar
 # >
 
-gl = gl - GroceryList(ingredients=['953.5 kg sugar', 'chocolate']) * 2
+gl = gl - GroceryList(ingredients=['953.5 g sugar', 'chocolate']) * 2
 print(gl)
 
 # <GroceryList object: 2 ingredients
@@ -153,6 +153,69 @@ print(menu.groceries)
 #                salt,
 #          150 g spaghetti
 # >
+```
+
+### Changing configs
+`groceries` has built in functionality to change whatever configuration
+defines the units, ingredient rules and formatting.
+
+To change a particular config, either
+* modify an existing config at runtime,
+* use one of the other supplied configs, or
+* create your own from one of the `groceries.configs.config_types`.
+
+To set a specific config, use `config.set_config()`.
+
+For Units, specifically, we need to reload the unit definition if the
+config relating to unit handling is changed. This is done via
+`units.reload_units()`
+
+```python
+from groceries.config.config_handler import config
+from groceries.config.config_types import UnitDefinition
+from groceries.config.unit_definition.metric_imperial import unit_definition
+from groceries.units import units
+
+from groceries.groceries import Ingredient
+
+ing = Ingredient('2.75 inches')
+
+print(ing.ingredient_formatted())
+# 2 3/4 inches
+```
+The unit is formatted according to formatting rules that prioritize
+perfect fractions of inches. But we want to force formatting to metric.
+
+We look at the rules and remove the formatting rule for inches:
+```
+for rule in config.unit_definition.formatting['length']:
+    print(rule)
+# {'unit': 'cm', 'checks': [EqualTo(0)]}
+# {'unit': 'inch', 'checks': [LessThan(0.5), FractionOf(0.0254)]}
+# {'unit': 'mm', 'checks': [LessThan(0.01)]}
+# {'unit': 'cm', 'checks': [GreaterThanOrEqualTo(0.01), LessThan(1)]}
+# {'unit': 'm', 'checks': [AlwaysTrue()]}
+
+# Remove inches from formatting rule for length:
+new_formatting = unit_definition.formatting
+new_formatting['length'] = [rule for rule in new_formatting['length'] if rule['unit'] != 'inch']
+
+new_definition = UnitDefinition(
+    units=unit_definition.units,
+    formatting=new_formatting,
+    constants=unit_definition.constants
+)
+```
+Now we can set the new config and reload the units definition:
+```
+config.set_config(new_definition)
+units.reload_units()
+```
+The new formatting will yield metric, as inches is removed from the
+formatting definition.
+```
+print(Ingredient('2 3/4 inches').ingredient_formatted())
+# 6.98 cm
 ```
 
 So, happy shopping!
