@@ -1,7 +1,7 @@
 # groceries
 [![Build Status](https://travis-ci.org/tobiasli/groceries.svg?branch=master)](https://travis-ci.org/tobiasli/groceries)<br/>
 [![Coverage Status](https://coveralls.io/repos/github/tobiasli/groceries/badge.svg?branch=master)](https://coveralls.io/github/tobiasli/groceries?branch=master)<br/>
-[![PyPI version](https://badge.fury.io/py/groceries-tobiasli.svg)](https://badge.fury.io/py/tregex-tobiasli)<br/>
+[![PyPI version](https://badge.fury.io/py/groceries-tobiasli.svg)](https://badge.fury.io/py/groceries-tobiasli)<br/>
 
 `groceries` Tools for parsing human readable shopping lists and recipe ingredients.
 
