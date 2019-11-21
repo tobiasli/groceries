@@ -15,15 +15,14 @@ pip install groceries-tobiasli
 
 `groceries` contains a set of classes that solve a lot of shopping and food-related problems:
 
-* `Ingredient` is a container for a food item, and parses amount, unit and item name from an arbitrary string.
+* `Ingredient` is a container for a food item, and parses amount, unit and item name from an arbitrary string. The base structure for an `Ingredient` string is `Optional[amount] Optional[unit] grocery_name, Optional[comment]`.
 * `GroceryList` is a container for `Ingredients` and handles summation of all ingredients, as well as algebra.
 * `Cookbook` is a container for `Recipe`, and make them searchable.
 * `Menu` is the class returned when you use a `Cookbook` to parse an actual, typed shopping list. It contains the recipes and ingredients that are parsed from the shopping list.
 
 ### GroceryList
 `GroceryList` is the base component for most of the functionality in `groceries`. A `GroceryList` accepts groceries
-as strings on a human readable format. They are added to a `GroceryList` as `Ingredient` instances. Groceries lists can
-be added, subtracted and multiplied.
+as strings on a human readable format. They are added to a `GroceryList` as `Ingredient` instances.
 
 ```python
 from groceries import GroceryList
@@ -45,7 +44,9 @@ print(gl)
 #        1.78 dl foo,
 #        2.91 kg sugar
 # >
-
+```
+`GroceryList` instances can be added, subtracted with other `GroceryLists`. They can also be multiplied with skalars.
+```
 gl = gl - GroceryList(ingredients=['953.5 g sugar', 'chocolate']) * 2
 print(gl)
 
@@ -54,10 +55,6 @@ print(gl)
 #        1.00 kg sugar
 # >
 ```
-
-The base structure for an `Ingredient` string is 
-
-`Optional[amount] Optional[unit] grocery_name, Optional[comment]`.
 
 ### Recipe and Cookbooks
 
