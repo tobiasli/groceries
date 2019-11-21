@@ -425,14 +425,14 @@ class Menu(object):
         text = ''
         for item in self.processed_lines:
             if isinstance(item, str):
-                text += item + newline
+                text += item + newline + newline
             elif isinstance(item, RecipeChoice):
                 text += '== %s ==%s' % (str(item), newline)
                 if item.name:
                     text += item.how_to + newline
                     for ing in item.ingredients.ingredients_formatted(sort='alphabetical', pretty=True,
                                                                       include_comments=True):
-                        text += ing + newline
+                        text += ing + newline + newline
 
         return text
 
