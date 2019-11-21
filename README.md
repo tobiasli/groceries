@@ -76,9 +76,10 @@ recipe1 = Recipe(
     tags=['pasta', 'fast', 'egg', 'bacon'],
     time=20,
     serves=2,
-    how_to='''Cook pasta. As pasta is preparing, fry bacon. When bacon is done, add frozen pees and continue frying
-    until pees are cooked. Mix finished pasta with bacon and pees. Add eggs and grated parmesan and stir. Season with
-    salt and pepper.''',
+    how_to='''Cook pasta. As pasta is preparing, fry bacon. 
+    When bacon is done, add frozen pees and continue frying until pees are cooked.
+    Mix finished pasta with bacon and pees. Add eggs and grated parmesan and stir.
+    Season with salt and pepper.''',
     ingredients=[
         '150 g spaghetti',
         '100 g bacon',
