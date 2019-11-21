@@ -113,7 +113,7 @@ _formatting = {
     ],
     'mass': [
         {'unit': 'g', 'checks': [c.EqualTo(0)]},
-        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(1000)]},
+        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(1000), c.FractionOf(1000)]},
         {'unit': 'g', 'checks': [c.LessThan(1000), c.GreaterThanOrEqualTo(0.5), c.FractionOf(1)]},
         {'unit': 'mg', 'checks': [c.LessThan(1)]},
     ],
