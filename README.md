@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/tobiasli/groceries/badge.svg?branch=master)](https://coveralls.io/github/tobiasli/groceries?branch=master)<br/>
 [![PyPI version](https://badge.fury.io/py/groceries-tobiasli.svg)](https://badge.fury.io/py/tregex-tobiasli)<br/>
 
-`groceries` is a package for parsing shopping lists and dinner menus and compiling shopping lists with all the items.
+`groceries` Tools for parsing human readable shopping lists and recipe ingredients.
 
 ## Install
 
