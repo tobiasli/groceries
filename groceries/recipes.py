@@ -16,10 +16,7 @@ from typing import Union, List, Sequence, Tuple
 
 import tregex
 from groceries.groceries import GroceryList, Ingredient
-
-from groceries.config.constants.default import constants
-from groceries.config.languages.norwegian import language
-from groceries.config.menu_format.simple_text_menu import menu_format
+from groceries.configs.config_handler import config
 
 
 class Recipe:
@@ -66,7 +63,7 @@ class RecipeChoice(Recipe):
             self.made_for = made_for
             self.multiplier = multiplier
         else:
-            self.made_for = constants.default_recipe_servings
+            self.made_for = config.constants.default_recipe_servings
             self.multiplier = 1
 
         if self.serves:
@@ -83,11 +80,11 @@ class RecipeChoice(Recipe):
 
     def __str__(self) -> str:
         if self.plan_tag and not self.name:
-            return '%s: %s' % (self.plan_tag, 'Ingen oppskrift')
+            return '%s: %s' % (self.plan_tag, config.language.no_recipe)
         elif self.plan_tag and self.name and self.multiplier != 1:
             return '%s: %s x%d' % (self.plan_tag, self.name, self.multiplier)
         elif self.plan_tag and self.name and self.made_for:
-            return '%s: %s til %s personer' % (self.plan_tag, self.name, self.made_for)
+            return '%s: %s %s %s' % (self.plan_tag, self.name, config.language.servings_prefix, self.made_for)
         if self.plan_tag and self.name:
             return '%s: %s' % (self.plan_tag, self.name)
         else:
@@ -97,7 +94,7 @@ class RecipeChoice(Recipe):
         if self.plan_tag and self.name:
             return '<RecipeChoice object: %s: %s>' % (self.plan_tag, self.name)
         elif self.plan_tag and not self.name:
-            return '<RecipeChoice object: %s: %s>' % (self.plan_tag, 'No recipe')
+            return '<RecipeChoice object: %s: %s>' % (self.plan_tag, config.language.no_recipe)
         else:
             return '<RecipeChoice object: %s>' % self.name
 
@@ -116,7 +113,7 @@ class RecipeConfigType:
                  how_to: str,
                  serves: Union[float, int],
                  ingredients: List[str]):
-        """Class for defining the recipe information from a cookbook-config."""
+        """Class for defining the recipe information from a cookbook-configs."""
         self.name = name
         self.tags = tags
         self.time = time
@@ -313,11 +310,11 @@ class Menu(object):
         # String construction for Menu parsing:
         sep = r'\s*'  # General seperator
         start = r'^'
-        tag_pattern = fr'(?P<plan_tag>{menu_format.tag_identifier})'
-        recipe_pattern = fr'(?P<recipe>{menu_format.recipe_identifier})?'
-        scaling_pattern = fr'(?:[x\*] ?(?P<multiplier>{menu_format.scaling_number_format})|{language.servings_prefix} (?P<made_for>{menu_format.scaling_number_format})|$)'
+        tag_pattern = fr'(?P<plan_tag>{config.menu_format.tag_identifier})'
+        recipe_pattern = fr'(?P<recipe>{config.menu_format.recipe_identifier})?'
+        scaling_pattern = fr'(?:[x\*] ?(?P<multiplier>{config.menu_format.scaling_number_format})|{config.language.servings_prefix} (?P<made_for>{config.menu_format.scaling_number_format})|$)'
 
-        self.menu_pattern = start + sep + sep.join([tag_pattern, menu_format.tag_separator, recipe_pattern, scaling_pattern]) + sep
+        self.menu_pattern = start + sep + sep.join([tag_pattern, config.menu_format.tag_separator, recipe_pattern, scaling_pattern]) + sep
 
         self.input_plan, self.input_lines, self.processed_lines, self.processed_plan = self.process_plan(menu_text)
 
@@ -351,15 +348,15 @@ class Menu(object):
 
     def process_line(self, line: str) -> Union[str, Ingredient, RecipeChoice]:
 
-        line = re.sub(language.recipe_not_found_message, '', line)
+        line = re.sub(config.language.recipe_not_found_message, '', line)
 
         if not line:
             return line
 
-        elif line[0] == constants.week_plan_comment_prefix:
+        elif line[0] == config.constants.week_plan_comment_prefix:
             return line
 
-        elif menu_format.tag_separator in line:
+        elif config.menu_format.tag_separator in line:
             match = tregex.to_dict(self.menu_pattern, line)[0]
 
             if match['recipe'] == '-':
@@ -377,7 +374,7 @@ class Menu(object):
                     return RecipeChoice(recipe=recipe, plan_tag=match['plan_tag'], made_for=match['made_for'],
                                         multiplier=match['multiplier'])
                 else:
-                    return RecipeChoice(Recipe(name=language.recipe_not_found_message), plan_tag=match[
+                    return RecipeChoice(Recipe(name=config.language.recipe_not_found_message), plan_tag=match[
                         'plan_tag'])  # Blank recipe choice. Makes handling later easier as other methods don't fail.
 
         else:
@@ -395,13 +392,13 @@ class Menu(object):
                 recipe = line.name
 
                 if not recipe:
-                    output_lines += ['%s%s %s' % (tag, menu_format.tag_separator, language.no_recipe)]
+                    output_lines += ['%s%s %s' % (tag, config.menu_format.tag_separator, config.language.no_recipe)]
                 else:
                     if not line.multiplier == 1:
                         scale = 'x%0.1f' % line.multiplier
                     else:
-                        scale = '%s %d' % (language.servings_prefix, line.made_for)
-                    output_lines += ['%s%s %s %s' % (tag, menu_format.tag_separator, recipe, scale)]
+                        scale = '%s %d' % (config.language.servings_prefix, line.made_for)
+                    output_lines += ['%s%s %s %s' % (tag, config.menu_format.tag_separator, recipe, scale)]
 
             elif isinstance(line, Ingredient):
                 output_lines += [line.ingredient_formatted()]

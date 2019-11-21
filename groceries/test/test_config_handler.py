@@ -1,5 +1,5 @@
-from groceries.config.config_handler import config, default_settings
-from groceries.config.config_types import Settings, Language, UnitDefinition, MenuFormat, Constants
+from groceries.configs.config_handler import config, default_settings
+from groceries.configs.config_types import Settings, Language, UnitDefinition, MenuFormat, Constants
 from copy import deepcopy
 
 

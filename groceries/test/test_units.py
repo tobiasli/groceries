@@ -1,7 +1,7 @@
 """Tests for the unit-components of the groceries package."""
 import pytest
 import numpy
-from groceries.config.config_handler import config
+from groceries.configs.config_handler import config
 from groceries import units
 
 TEST_CASES_COMPONENTS = [

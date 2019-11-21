@@ -2,7 +2,7 @@
 import typing as ty
 from abc import abstractmethod
 
-from groceries.config.constants.default import constants
+from groceries.configs.constants.default import constants
 
 Number = ty.Union[int, float]
 

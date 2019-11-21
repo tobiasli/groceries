@@ -1,4 +1,4 @@
-from groceries.config.config_types import Constants
+from groceries.configs.config_types import Constants
 
 constants = Constants(
     number_format=r'(?:%(start)s%(part1)s%(stop)s)?(?:(?<=\d) +)?(?:%(start)s%(part2)s%(stop)s)?%(force_fail)s' % {

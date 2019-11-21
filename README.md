@@ -164,7 +164,20 @@ To change a particular config, either
 * use one of the other supplied configs, or
 * create your own from one of the `groceries.configs.config_types`.
 
-To set a specific config, use `config.set_config()`.
+To set a specific config, use `configs.set_config()`.
+
+```python
+from groceries import config, language
+
+print(config.language.language_name)
+# 'English'
+config.set_config(language.norwegian.language)
+
+print(config.language.language_name)
+# 'Norwegian'
+```
+
+### Changing unit config
 
 For Units, specifically, we need to reload the unit definition if the
 config relating to unit handling is changed. This is done via

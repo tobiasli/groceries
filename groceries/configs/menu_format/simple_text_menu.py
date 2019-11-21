@@ -1,4 +1,4 @@
-from groceries.config.config_types import MenuFormat
+from groceries.configs.config_types import MenuFormat
 
 menu_format = MenuFormat(
     scaling_number_format=r'\d+(?:[,\.]\d+)?',

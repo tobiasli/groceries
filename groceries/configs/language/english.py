@@ -1,8 +1,9 @@
-"""All config parameters related to language components."""
+"""All configs parameters related to language components."""
 
-from groceries.config.config_types import Language
+from groceries.configs.config_types import Language
 
 language = Language(
+    language_name='English',
     aprox_prefixes=[r'ca\.?', r'aprox\.?', r'aprx\.?', r'aproximately'],
     no_recipe_name='other',
     servings_prefix='for',

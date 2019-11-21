@@ -20,7 +20,7 @@ from typing import Union, Tuple, List, TYPE_CHECKING
 import tregex
 from groceries.units import units, Unit
 
-from groceries.config.config_handler import config
+from groceries.configs.config_handler import config
 
 if TYPE_CHECKING:
     from groceries import recipes
@@ -350,7 +350,7 @@ class Ingredient:
                     component_dict['recipe_multiplier'] = ing.recipe.multiplier
                     component_dict['recipe_scale'] = ing.recipe.scale
             else:
-                component_dict['recipe'] = config.constants.no_recipe_name
+                component_dict['recipe'] = config.language.no_recipe_name
 
             component_dict['name'] = ing.name
             component_dict['amount'] = ing.amount_formatted()

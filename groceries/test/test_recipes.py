@@ -461,9 +461,9 @@ def test_menu():
     2 banana
     4 liters coffee''')
 
-    assert menu.generate_processed_menu_str() == """Monday: Mac'n cheese til 2
-Tuesday: Chocolate til 2
-Wednesday: Carbonara til 2
+    assert menu.generate_processed_menu_str() == """Monday: Mac'n cheese for 2
+Tuesday: Chocolate for 2
+Wednesday: Carbonara for 2
 0.30 dl coffee
 0.30 dl baked beans
 1 banana

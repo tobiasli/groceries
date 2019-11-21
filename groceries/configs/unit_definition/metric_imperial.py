@@ -1,5 +1,5 @@
-from groceries.config.config_types import UnitDefinition
-from groceries.config.unit_definition.unit_constants import unit_constants as c
+from groceries.configs.config_types import UnitDefinition
+from groceries.configs.unit_definition.unit_constants import unit_constants as c
 
 _units = {
     'length': {

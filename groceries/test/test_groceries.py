@@ -298,3 +298,8 @@ def test_grocerylist_compare_with():
     assert superset_list.compare_with(groceries.GroceryList(subset)) == 1
     assert 0.4 <= superset_list.compare_with(groceries.GroceryList(subset_mismatch)) <= 0.6
     assert superset_list.compare_with(groceries.GroceryList(no_match)) == 0
+
+
+def test_grocerylist_components():
+    gl = groceries.GroceryList(['something', '4 weird things', '12 foo'])
+    assert gl.components()

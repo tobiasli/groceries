@@ -1,4 +1,4 @@
-"""Classes for containing various config information."""
+"""Classes for containing various configs information."""
 import typing as ty
 import types as tys
 import abc
@@ -9,11 +9,11 @@ Number = ty.Union[float, int]
 
 
 class ConfigBase(metaclass=abc.ABCMeta):
-    """Base class for all config types."""
+    """Base class for all configs types."""
     @property
     @abc.abstractmethod
     def name(self) -> str:
-        """The name of he current config."""
+        """The name of he current configs."""
 
 
 class Settings(ConfigBase):
@@ -35,6 +35,7 @@ class Language(ConfigBase):
     name = 'language'
 
     def __init__(self,
+                 language_name: str,
                  aprox_prefixes: ty.List[str],
                  no_recipe_name: str,
                  servings_prefix: str,
@@ -42,7 +43,7 @@ class Language(ConfigBase):
                  no_recipe: str
                  ):
         """
-        Class containing all config properties pertaining to Language options in the application.
+        Class containing all configs properties pertaining to Language options in the application.
 
         :param aprox_prefixes: Prefixes used to denote approximate amounts in Ingredients.
         :param no_recipe_name: Category used to group Ingredients in a shopping list that do not come from a specific
@@ -54,6 +55,7 @@ class Language(ConfigBase):
         :param no_recipe: String that is used to identify tags without a recipe. Tags can be left open in a menu,
                           denoting that we don't need anything specific for a given day.
         """
+        self.language_name = language_name
         self.aprox_prefixes = aprox_prefixes
         self.no_recipe_name = no_recipe_name
         self.servings_prefix = servings_prefix

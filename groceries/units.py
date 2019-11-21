@@ -15,7 +15,7 @@ from typing import List, Tuple, Dict, Union
 
 import tregex
 
-from groceries.config.config_handler import config
+from groceries.configs.config_handler import config
 
 
 class Unit(object):
@@ -256,7 +256,7 @@ class Units:
         self.no_unit = Unit()  # Empty unit with default, blank properties for those groceries without a unit.
 
     def reload_units(self) -> None:
-        """Reload the units based on the config."""
+        """Reload the units based on the configs."""
         self.units = self._define_units()
 
     @staticmethod
