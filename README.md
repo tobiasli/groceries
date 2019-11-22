@@ -20,6 +20,26 @@ pip install groceries-tobiasli
 * `Cookbook` is a container for `Recipe`, and make them searchable.
 * `Menu` is the class returned when you use a `Cookbook` to parse an actual, typed shopping list. It contains the recipes and ingredients that are parsed from the shopping list.
 
+### Ingredient
+`Ingredient` is a class that takes any arbitrary string describing an 
+amount of an grocery item. The amount and unit is generalized and with 
+the formatting in `groceries` the unit can be represented in 
+
+```python
+from groceries import Ingredient
+
+print(repr(Ingredient('10 2/3 tbs soy sauce')))
+# <Ingredient object: 1.60 dl soy sauce: <Unit: volume: [liter, litre, liters, ...]>>
+```
+To simply get the most reasonable representation of the `Ingredient`, 
+simply convert it to a string:
+```python
+print(Ingredient('302.3949133 grams baked beans'))
+# 1 lbs baked beans
+```
+
+
+
 ### GroceryList
 `GroceryList` is the base component for most of the functionality in `groceries`. A `GroceryList` accepts groceries
 as strings on a human readable format. They are added to a `GroceryList` as `Ingredient` instances.
@@ -33,16 +53,16 @@ gl.add_ingredients([
     '2 pounds sugar',
     '2 kg sugar',
     'chocolate',
-    '4 floz foo',
-    '4 tbs foo'
+    '1/4 floz foo',
+    '1 2/9 tbs foo'
 ])
 
 print(gl)
 
 # <GroceryList object: 3 ingredients
 #                chocolate,
-#        1.78 dl foo,
-#        2.91 kg sugar
+#        0.26 dl foo,
+#      2907.18 g sugar
 # >
 ```
 `GroceryList` instances can be added, subtracted with other `GroceryLists`. They can also be multiplied with skalars.
@@ -51,7 +71,7 @@ gl = gl - GroceryList(ingredients=['953.5 g sugar', 'chocolate']) * 2
 print(gl)
 
 # <GroceryList object: 2 ingredients
-#        1.78 dl foo,
+#        0.26 dl foo,
 #        1.00 kg sugar
 # >
 ```
@@ -162,7 +182,7 @@ To change a particular config, either
 * use one of the other supplied configs, or
 * create your own from one of the `groceries.configs.config_types`.
 
-To set a specific config, use `configs.set_config()`.
+To finally set a specific config, use `configs.set_config()`.
 
 ```python
 from groceries import config, language
@@ -174,6 +194,7 @@ config.set_config(language.norwegian.language)
 print(config.language.language_name)
 # 'Norwegian'
 ```
+A special condition applies if you are changing unit configs.
 
 ### Changing unit config
 
@@ -182,51 +203,27 @@ config relating to unit handling is changed. This is done via
 `units.reload_units()`
 
 ```python
-from groceries.config.config_handler import config
-from groceries.config.config_types import UnitDefinition
-from groceries.config.unit_definition.metric_imperial import unit_definition
-from groceries.units import units
+from groceries import config, configs, units, Ingredient
 
-from groceries.groceries import Ingredient
-
-ing = Ingredient('2.75 inches')
-
-print(ing.ingredient_formatted())
-# 2 3/4 inches
+print(Ingredient('2 lbs butter'))
+# 2 lb butter
 ```
-The unit is formatted according to formatting rules that prioritize
-perfect fractions of inches. But we want to force formatting to metric.
+But we want to force a different config for units. We want to use a 
+purely metric unit definition that will always format `Ingredient`s as 
+metric. 
 
-We look at the rules and remove the formatting rule for inches:
-```
-for rule in config.unit_definition.formatting['length']:
-    print(rule)
-# {'unit': 'cm', 'checks': [EqualTo(0)]}
-# {'unit': 'inch', 'checks': [LessThan(0.5), FractionOf(0.0254)]}
-# {'unit': 'mm', 'checks': [LessThan(0.01)]}
-# {'unit': 'cm', 'checks': [GreaterThanOrEqualTo(0.01), LessThan(1)]}
-# {'unit': 'm', 'checks': [AlwaysTrue()]}
-
-# Remove inches from formatting rule for length:
-new_formatting = unit_definition.formatting
-new_formatting['length'] = [rule for rule in new_formatting['length'] if rule['unit'] != 'inch']
-
-new_definition = UnitDefinition(
-    units=unit_definition.units,
-    formatting=new_formatting,
-    constants=unit_definition.constants
-)
-```
-Now we can set the new config and reload the units definition:
-```
-config.set_config(new_definition)
-units.reload_units()
+To do that we have to find the unit definition that we want, and set
+that config. Since we are changing the units, we also have to reload 
+the units.
+```python
+config.set_config(configs.unit_definition.metric.unit_definition)
+units.units.reload_units()
 ```
 The new formatting will yield metric, as inches is removed from the
 formatting definition.
-```
-print(Ingredient('2 3/4 inches').ingredient_formatted())
-# 6.98 cm
+```python
+print(Ingredient('2 lb butter'))
+# 907.18 g butter
 ```
 
 So, happy shopping!

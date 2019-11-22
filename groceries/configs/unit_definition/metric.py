@@ -109,12 +109,14 @@ _formatting = {
         {'unit': 'cm', 'checks': [c.EqualTo(0)]},
         {'unit': 'cm', 'checks': [c.GreaterThanOrEqualTo(0.01), c.LessThan(1)]},
         {'unit': 'mm', 'checks': [c.LessThan(0.01)]},
-        {'unit': 'm', 'checks': [c.AlwaysTrue]},  # Last check is always true, so the unit defaults to 'm'.
+        {'unit': 'm', 'checks': [c.AlwaysTrue()]},  # Last check is always true, so the unit defaults to 'm'.
     ],
     'mass': [
         {'unit': 'g', 'checks': [c.EqualTo(0)]},
-        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(1000), c.FractionOf(1000)]},
+        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(300), c.FractionOf(1000)]},
+        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(1000)]},
         {'unit': 'g', 'checks': [c.LessThan(1000), c.GreaterThanOrEqualTo(0.5), c.FractionOf(1)]},
+        {'unit': 'g', 'checks': [c.LessThan(1000), c.GreaterThanOrEqualTo(0.5)]},
         {'unit': 'mg', 'checks': [c.LessThan(1)]},
     ],
     'volume': [

@@ -207,7 +207,11 @@ class Ingredient:
         self.id = self.name + '_' + self.unit.dimension
 
     def __str__(self) -> str:
-        return str(self.__repr__())
+        amount = self.amount_formatted()
+        if amount:
+            return rf'{amount} {self.name}'
+        else:
+            return self.name
 
     def __repr__(self) -> str:
         return '<%s object: %s %s: %s>' % ('Ingredient', self.amount_formatted(), self.name, str(self.unit))

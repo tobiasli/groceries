@@ -33,7 +33,7 @@ _units = {
             'scale': 28.349523125,
         },
         'lb': {
-            'variants': ['pound', 'pounds'],
+            'variants': ['lbs', 'pound', 'pounds'],
             'scale': 453.59237,
         }
     },
@@ -116,8 +116,10 @@ _formatting = {
         {'unit': 'g', 'checks': [c.EqualTo(0)]},
         {'unit': 'lb', 'checks': [c.LessThan(2000), c.FractionOf(_units['mass']['lb']['scale'])]},
         {'unit': 'oz', 'checks': [c.LessThan(1000), c.FractionOf(_units['mass']['oz']['scale'])]},
-        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(1000), c.FractionOf(1000)]},
+        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(300), c.FractionOf(1000)]},
+        {'unit': 'kg', 'checks': [c.GreaterThanOrEqualTo(1000)]},
         {'unit': 'g', 'checks': [c.LessThan(1000), c.GreaterThanOrEqualTo(0.5), c.FractionOf(1)]},
+        {'unit': 'g', 'checks': [c.LessThan(1000), c.GreaterThanOrEqualTo(0.5)]},
         {'unit': 'mg', 'checks': [c.LessThan(1)]},
     ],
     'volume': [
@@ -125,6 +127,7 @@ _formatting = {
         {'unit': 'cup', 'checks': [c.FractionOf(_units['volume']['cup']['scale'])]},
         {'unit': 'l', 'checks': [c.GreaterThanOrEqualTo(1)]},
         {'unit': 'l', 'checks': [c.GreaterThanOrEqualTo(0.5), c.FractionOf(1)]},
+        {'unit': 'dl', 'checks': [c.GreaterThanOrEqualTo(0.01), c.LessThan(1), c.FractionOf(0.1)]},
         {'unit': 'dl', 'checks': [c.GreaterThanOrEqualTo(0.01), c.LessThan(1)]},
         {'unit': 'ts', 'checks': [c.LessThan(0.015), c.GreaterThanOrEqualTo(0.005 / 4),
                                   c.FractionOf(_units['volume']['ts']['scale'])]},

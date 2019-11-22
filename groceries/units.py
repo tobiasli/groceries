@@ -89,9 +89,12 @@ class Unit(object):
         normalized_amount.sort()
 
         for variant in self.formatting:
-            if len(variant['checks']) == sum([check(normalized_amount[0]) for check in variant['checks']]):
-                unit = variant['unit']
-                break
+            try:
+                if len(variant['checks']) == sum([check(normalized_amount[0]) for check in variant['checks']]):
+                    unit = variant['unit']
+                    break
+            except TypeError:
+                abs(1)
 
         # If no formatting is found, select the unit with scale == 1:
         if not unit:
