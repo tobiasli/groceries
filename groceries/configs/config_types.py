@@ -13,7 +13,7 @@ class ConfigBase(metaclass=abc.ABCMeta):
     @property
     @abc.abstractmethod
     def name(self) -> str:
-        """The name of he current configs."""
+        """The name of the current configs."""
 
 
 class Settings(ConfigBase):
@@ -24,7 +24,8 @@ class Settings(ConfigBase):
                  small_fractions: bool
                  ) -> None:
         """
-        :param unit_formatting_variant: Name of the unit formatting rule you choose to use. Can be either 'metric_impterial' or 'metric'.
+        Config for general settings in the groceries package.
+        :param unit_formatting_variant: Name of the unit formatting rule you choose to use. Can be either 'metric_imperial' or 'metric'.
         :param small_fractions: Choose to use either large fractions (1/2) or small fractions (unicode fractions chars).
         """
         self.small_fractions = small_fractions
@@ -43,17 +44,17 @@ class Language(ConfigBase):
                  no_recipe: str
                  ):
         """
-        Class containing all configs properties pertaining to Language options in the application.
+        Config class containing all config properties pertaining to Language options in the groceries package.
 
         :param aprox_prefixes: Prefixes used to denote approximate amounts in Ingredients.
-        :param no_recipe_name: Category used to group Ingredients in a shopping list that do not come from a specific
+        :param no_recipe_name: Category tag used to group Ingredients in a shopping list that do not come from a specific
                                Recipe.
         :param servings_prefix: When mentioning servings in text, what is the typical prefix for the number of servings.
                                 If the Recipe serves 2, the prefix is "serves" would make it "serves 2".
         :param recipe_not_found_message: When parsing a menu, if a recipe is not found when looking for a recipe, this
                                          is the message that is displayed for the user.
-        :param no_recipe: String that is used to identify tags without a recipe. Tags can be left open in a menu,
-                          denoting that we don't need anything specific for a given day.
+        :param no_recipe: String that is used to identify grocery list tags/days without a recipe. Tags can be left open
+                          in a menu, denoting that we don't need anything specific for a given day.
         """
         self.language_name = language_name
         self.aprox_prefixes = aprox_prefixes
@@ -79,8 +80,8 @@ class Constants(ConfigBase):
         Class containing all constants used in various places around the groceries module.
         :param number_format: This is a complex regex pattern identifying all kinds of numbers.
         :param intuitive_denominators: A list of denominators that are in reasonable use when cooking food.
-        :param fraction_rest_limit: Rounding limit for chosing to use an intuitive fraction.
-        :param fractions: A lookup table between unicode small fractions and regular ascii fractions.
+        :param fraction_rest_limit: Rounding limit for chosing to use an intuitive denominator fraction.
+        :param fractions: A lookup table between unicode small fractions and regular ascii multi character fractions.
         :param default_recipe_servings: The default amount of servings if not specified for a Recipe.
         :param ingredient_match_limit: The difflib.Sequence score lower limit for matching similar ingredients.
         :param week_plan_comment_prefix: Which prefix to use when parsing for comments in a menu.
