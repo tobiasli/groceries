@@ -3,7 +3,7 @@
 [![Coverage Status](https://coveralls.io/repos/github/tobiasli/groceries/badge.svg?branch=master)](https://coveralls.io/github/tobiasli/groceries?branch=master)<br/>
 [![PyPI version](https://badge.fury.io/py/groceries-tobiasli.svg)](https://badge.fury.io/py/groceries-tobiasli)<br/>
 
-`groceries` Tools for parsing human readable shopping lists and recipe ingredients.
+`groceries` contains tools for parsing human readable shopping lists and recipe ingredients.
 
 ## Install
 
@@ -17,13 +17,13 @@ pip install groceries-tobiasli
 
 * `Ingredient` is a container for a food item, and parses amount, unit and item name from an arbitrary string. The base structure for an `Ingredient` string is `Optional[amount] Optional[unit] grocery_name, Optional[comment]`.
 * `GroceryList` is a container for `Ingredients` and handles summation of all ingredients, as well as algebra.
-* `Cookbook` is a container for `Recipe`, and make them searchable.
-* `Menu` is the class returned when you use a `Cookbook` to parse an actual, typed shopping list. It contains the recipes and ingredients that are parsed from the shopping list.
+* `Recipe` is a class for representing cooking recipes, which contain `GroceryLists` for ingredient handling.
+* `Cookbook` is a container for `Recipe` objects, and make them searchable.
+* `Menu` is a class returned from `Cookbook` when `Cookbook`is used to parse an actual, typed shopping list. `Menu` contains the recipes and ingredients that are parsed from the shopping list.
 
 ### Ingredient
 `Ingredient` is a class that takes any arbitrary string describing an 
-amount of an grocery item. The amount and unit is generalized and with 
-the formatting in `groceries` the unit can be represented in 
+amount of a grocery item.
 
 ```python
 from groceries import Ingredient
@@ -31,18 +31,16 @@ from groceries import Ingredient
 print(repr(Ingredient('10 2/3 tbs soy sauce')))
 # <Ingredient object: 1.60 dl soy sauce: <Unit: volume: [liter, litre, liters, ...]>>
 ```
-To simply get the most reasonable representation of the `Ingredient`, 
-simply convert it to a string:
+String formatting of an `Ingredient` yields the most reasonable 
+representation representation of the amount and unit of an 
+ingredient:
 ```python
 print(Ingredient('302.3949133 grams baked beans'))
 # 1 lbs baked beans
 ```
 
-
-
 ### GroceryList
-`GroceryList` is the base component for most of the functionality in `groceries`. A `GroceryList` accepts groceries
-as strings on a human readable format. They are added to a `GroceryList` as `Ingredient` instances.
+A `GroceryList` accepts groceries as strings on a human readable format. The groceries are added to the `GroceryList` as `Ingredient` instances.
 
 ```python
 from groceries import GroceryList
@@ -65,7 +63,7 @@ print(gl)
 #      2907.18 g sugar
 # >
 ```
-`GroceryList` instances can be added, subtracted with other `GroceryLists`. They can also be multiplied with skalars.
+`GroceryList` instances can be added or subtracted with other `GroceryLists`. They can also be multiplied with scalars.
 ```
 gl = gl - GroceryList(ingredients=['953.5 g sugar', 'chocolate']) * 2
 print(gl)
@@ -79,9 +77,7 @@ print(gl)
 ### Recipe and Cookbooks
 
 The `GroceryList` class is used to represent ingredients in recipes. `Recipe` is a class that contains information
-on how to cook a specific meal. You can have multiple `Recipes` and add them to a `Cookbook`.
-
-The recipes are searchable both on name and tags. 
+on how to cook a specific meal. You can add multiple `Recipes` to a `Cookbook`.
 
 ```python
 # Demo scripts for grocery readme.
@@ -115,6 +111,10 @@ recipe3 = Recipe(name='Chocolate', tags=['sweet', 'dessert'], time=2, serves=2, 
 
 cookbook = Cookbook(recipes=[recipe1, recipe2, recipe3])
 
+```
+The recipes are searchable by name and tags. 
+```python
+
 # Accepts fuzzy string matching:
 
 print(cookbook.find_recipe('mac cheese'))
@@ -146,9 +146,9 @@ menu = cookbook.parse_menu('''Monday: mac cheese
     4 liters coffee''')
 
 print(menu.generate_processed_menu_str())
-# Monday: Mac'n cheese til 2
-# Tuesday: Chocolate til 2
-# Wednesday: Carbonara til 2
+# Monday: Mac'n cheese for 2
+# Tuesday: Chocolate for 2
+# Wednesday: Carbonara for 2
 # 0.30 dl coffee
 # 0.30 dl baked beans
 # 1 banana
@@ -198,32 +198,31 @@ A special condition applies if you are changing unit configs.
 
 ### Changing unit config
 
-For Units, specifically, we need to reload the unit definition if the
-config relating to unit handling is changed. This is done via
-`units.reload_units()`
+For `Units`, specifically, we need to reinitiate some classes
+after changing configs. This is done via `units.reload_units()`.
 
+As an example:
 ```python
 from groceries import config, configs, units, Ingredient
 
 print(Ingredient('2 lbs butter'))
 # 2 lb butter
 ```
-But we want to force a different config for units. We want to use a 
-purely metric unit definition that will always format `Ingredient`s as 
-metric. 
+The above weight amount matches perfectly with pounds, so `groceries`
+formats the amount as `lbs`. We want to force `groceries` to
+represent the ingredient in metric.
 
-To do that we have to find the unit definition that we want, and set
-that config. Since we are changing the units, we also have to reload 
-the units.
+To do that we have to find the unit definition that we want, set
+that config, and then reload the units.
 ```python
 config.set_config(configs.unit_definition.metric.unit_definition)
 units.units.reload_units()
 ```
-The new formatting will yield metric, as inches is removed from the
+The new formatting will yield metric, as pounds is removed from the
 formatting definition.
 ```python
 print(Ingredient('2 lb butter'))
 # 907.18 g butter
 ```
 
-So, happy shopping!
+Happy shopping!
